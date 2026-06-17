@@ -4,7 +4,7 @@
 
 **Construyendo el futuro de los flujos de trabajo para creadores de contenido.**
 
-[🇺🇸 English](README.md) | [🇪🇸 Español](README_ES.md)
+[🇺🇸 English](README.md) | [🇪🇸 Español](README.es.md)
 
 </div>
 

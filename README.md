@@ -4,7 +4,7 @@
 
 **Building the future of content production workflows**
 
-[🇺🇸 English](README.md) | [🇪🇸 Español](README_ES.md)
+[🇺🇸 English](README.md) | [🇪🇸 Español](README.es.md)
 
 </div>
 
