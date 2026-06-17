@@ -1,4 +1,14 @@
+<div align="center">
+
 # StreamElements Points Fetcher for Streamer.bot
+
+
+**Building the future of content production workflows**
+
+[🇺🇸 English](README.md) | [🇪🇸 Español](README_ES.md)
+
+</div>
+
 
 Obtiene los puntos de un usuario desde StreamElements y los almacena en una variable de Streamer.bot para utilizarla en comandos, acciones, respuestas automáticas y automatizaciones.
 

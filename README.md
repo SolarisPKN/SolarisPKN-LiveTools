@@ -1,6 +1,12 @@
+<div align="center">
+
 # 🚀 Solaris Media Production Suite
 
-**Building the future of content production workflows.**
+**Building the future of content production workflows**
+
+[🇺🇸 English](README.md) | [🇪🇸 Español](README_ES.md)
+
+</div>
 
 Solaris Media Production Suite is a long-term initiative focused on creating a unified ecosystem of tools, automations, integrations, and production resources for content creators, streamers, and digital media professionals.
 

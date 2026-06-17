@@ -1,49 +1,55 @@
+<div align="center">
+
 # 🚀 Solaris Media Production Suite
 
 **Construyendo el futuro de los flujos de trabajo para creadores de contenido.**
 
-Solaris Media Production Suite es una iniciativa a largo plazo enfocada en desarrollar un ecosistema unificado de herramientas, automatizaciones, integraciones y recursos de producción para creadores de contenido, streamers y profesionales de medios digitales.
+[🇺🇸 English](README.md) | [🇪🇸 Español](README_ES.md)
 
-La visión detrás de este proyecto es simple: los creadores deberían dedicar menos tiempo a las limitaciones técnicas y más tiempo a crear contenido, interactuar con sus comunidades y crecer.
+</div>
 
-## 🌟 Visión
+Solaris Media Production Suite es una iniciativa a largo plazo enfocada en desarrollar un ecosistema unificado de herramientas, automatizaciones, integraciones y recursos de producci贸n para creadores de contenido, streamers y profesionales de medios digitales.
 
-La producción de contenido moderna está fragmentada.
+La visi贸n detr谩s de este proyecto es simple: los creadores deber铆an dedicar menos tiempo a las limitaciones t茅cnicas y m谩s tiempo a crear contenido, interactuar con sus comunidades y crecer.
 
-Muchos creadores dependen de múltiples plataformas, herramientas desconectadas y procesos manuales para gestionar transmisiones, comunidades, automatizaciones, estadísticas y distribución de contenido.
+## 馃専 Visi贸n
 
-Solaris Media Production Suite busca conectar esas piezas mediante una colección de herramientas interoperables diseñadas para funcionar como un ecosistema de producción.
+La producci贸n de contenido moderna est谩 fragmentada.
+
+Muchos creadores dependen de m煤ltiples plataformas, herramientas desconectadas y procesos manuales para gestionar transmisiones, comunidades, automatizaciones, estad铆sticas y distribuci贸n de contenido.
+
+Solaris Media Production Suite busca conectar esas piezas mediante una colecci贸n de herramientas interoperables dise帽adas para funcionar como un ecosistema de producci贸n.
 
 El objetivo no es simplemente crear scripts.
 
 El objetivo es construir infraestructura para creadores.
 
-## 🚀 Estado Actual
+## 馃殌 Estado Actual
 
-El primer módulo público se centra en la integración entre StreamElements y Streamer.bot.
+El primer m贸dulo p煤blico se centra en la integraci贸n entre StreamElements y Streamer.bot.
 
 ### Disponible
 
-* Importación de puntos de lealtad de StreamElements
-* Sincronización automática de puntos en la variable `%sepoints%` dentro de Streamer.bot
-* Integración sencilla con flujos de automatización existentes
+* Importaci贸n de puntos de lealtad de StreamElements
+* Sincronizaci贸n autom谩tica de puntos en la variable `%sepoints%` dentro de Streamer.bot
+* Integraci贸n sencilla con flujos de automatizaci贸n existentes
 
-## 🔮 Hoja de Ruta
+## 馃敭 Hoja de Ruta
 
-Áreas previstas para futuras versiones:
+脕reas previstas para futuras versiones:
 
 * Integraciones avanzadas con plataformas
-* Herramientas para gestión de comunidades
-* Sistemas de automatización de producción
+* Herramientas para gesti贸n de comunidades
+* Sistemas de automatizaci贸n de producci贸n
 * Mejoras para flujos de streaming
 * Utilidades para creadores
-* Soluciones de análisis y monitoreo
-* Sistemas de comunicación multiplataforma
-* Recursos para producción de contenido
+* Soluciones de an谩lisis y monitoreo
+* Sistemas de comunicaci贸n multiplataforma
+* Recursos para producci贸n de contenido
 
-A medida que el ecosistema crezca, se incorporarán nuevos módulos manteniendo una arquitectura modular e independiente.
+A medida que el ecosistema crezca, se incorporar谩n nuevos m贸dulos manteniendo una arquitectura modular e independiente.
 
-## 🤝 Contribuciones
+## 馃 Contribuciones
 
 Las sugerencias, ideas y contribuciones son bienvenidas.
 
@@ -51,4 +57,4 @@ Construyamos mejores herramientas para creadores.
 
 ---
 
-📡 Crea más. Automatiza más. Gestiona menos.
+馃摗 Crea m谩s. Automatiza m谩s. Gestiona menos.
