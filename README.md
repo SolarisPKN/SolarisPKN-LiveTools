@@ -26,26 +26,29 @@ The goal is to build infrastructure for creators.
 
 ## 🚀 Current Stage
 
-The first public module focuses on integration between StreamElements and Streamer.bot.
+The first public modules focus on integration between StreamElements and Streamer.bot.
 
 ### Available
 
-* StreamElements Loyalty Points Import
-* Automatic synchronization of loyalty points into the `%sepoints%` variable inside Streamer.bot
-* Easy integration into existing automation workflows
+* StreamElements Loyalty Points Import.
+* Automatic synchronization of loyalty points into the `%sepoints%` variable inside Streamer.bot.
+* Points migration tool for transferring balances from StreamElements to local databases.
+* Complete Streamer.bot migration action.
+* Standalone migration script for custom integrations.
+* Easy integration into existing automation workflows.
 
 ## 🔮 Future Roadmap
 
 Planned areas of development include:
 
-* Advanced platform integrations
-* Community management tools
-* Production automation systems
-* Stream workflow enhancements
-* Creator-focused utilities
-* Analytics and monitoring solutions
-* Cross-platform communication systems
-* Content production resources
+* Advanced platform integrations.
+* Community management tools.
+* Production automation systems.
+* Stream workflow enhancements.
+* Creator-focused utilities.
+* Analytics and monitoring solutions.
+* Cross-platform communication systems.
+* Content production resources.
 
 As the ecosystem grows, new modules will be added while maintaining a modular and independent architecture.
 
