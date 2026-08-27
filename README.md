@@ -36,6 +36,7 @@ The first public modules focus on integration between StreamElements and Streame
 * Complete Streamer.bot migration action.
 * Standalone migration script for custom integrations.
 * Easy integration into existing automation workflows.
+* [LinkedIn Publisher](PublisherSuite/Linkedin/README.md): local MDX conversion with preview, rich clipboard copy, diagnostics, and exports.
 
 ## 🔮 Future Roadmap
 

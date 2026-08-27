@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Conversor local de Markdown y MDX para LinkedIn Articles.">
+  <title>SolarisPKN · LinkedIn Publisher</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#main" aria-label="Ir al conversor">
+      <span class="brand-mark" aria-hidden="true">S</span>
+      <span>
+        <strong>SolarisPKN</strong>
+        <small>LinkedIn Publisher</small>
+      </span>
+    </a>
+    <div class="privacy-pill" title="El MDX se procesa en este navegador">
+      <span class="status-dot" aria-hidden="true"></span>
+      Local · sin subir archivos
+    </div>
+  </header>
+
+  <main id="main" class="shell">
+    <section class="hero">
+      <p class="eyebrow">PublisherSuite / LinkedIn</p>
+      <h1>Del MDX al editor de LinkedIn, sin destruir el formato por el camino.</h1>
+      <p>Convertí títulos, listas, citas, enlaces, código e imágenes en un artículo listo para revisar y pegar. JSX y JavaScript nunca se ejecutan.</p>
+    </section>
+
+    <section class="workspace" aria-label="Conversor MDX">
+      <aside class="controls-panel">
+        <div class="step-heading">
+          <span>01</span>
+          <div>
+            <h2>Cargá el contenido</h2>
+            <p>MDX o Markdown, hasta 2 MiB.</p>
+          </div>
+        </div>
+
+        <div id="dropZone" class="drop-zone" aria-describedby="dropHelp">
+          <input id="mdxInput" type="file" accept=".md,.mdx,text/markdown,text/plain" hidden>
+          <span class="drop-icon" aria-hidden="true">↥</span>
+          <strong>Soltá tu MDX acá</strong>
+          <span>o elegilo desde el equipo</span>
+          <button id="chooseMdxButton" class="button secondary" type="button">Elegir MDX</button>
+          <small id="dropHelp">El archivo se lee únicamente en este navegador.</small>
+        </div>
+
+        <div class="file-row">
+          <div>
+            <strong id="sourceName">Ningún MDX cargado</strong>
+            <span id="sourceSize">—</span>
+          </div>
+          <button id="loadDemoButton" class="text-button" type="button">Usar ejemplo</button>
+        </div>
+
+        <label class="file-picker">
+          <span>
+            <strong>Metadatos JSON</strong>
+            <small>Opcional: title, description, tags, id.</small>
+          </span>
+          <input id="metadataInput" type="file" accept=".json,application/json">
+        </label>
+        <p id="metadataStatus" class="inline-status" aria-live="polite"></p>
+
+        <div class="step-heading compact">
+          <span>02</span>
+          <div>
+            <h2>Ajustá el destino</h2>
+            <p>Podés corregir lo inferido antes de copiar.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            <span>Título del artículo</span>
+            <input id="titleInput" type="text" maxlength="240" placeholder="Se infiere del MDX o JSON">
+          </label>
+          <label>
+            <span>Descripción</span>
+            <textarea id="descriptionInput" rows="4" maxlength="1200" placeholder="Resumen para el post de difusión"></textarea>
+          </label>
+          <label>
+            <span>URL base</span>
+            <input id="baseUrlInput" type="url" placeholder="https://solarispkn.dev/">
+            <small>Resuelve enlaces e imágenes relativos.</small>
+          </label>
+          <label>
+            <span>URL publicada</span>
+            <input id="articleUrlInput" type="url" placeholder="https://…">
+            <small>Se agrega al post corto, si ya existe.</small>
+          </label>
+          <label>
+            <span>Hashtags</span>
+            <input id="tagsInput" type="text" placeholder="AI, Desarrollo, SolarisPKN">
+            <small>Hasta ocho, separados por comas.</small>
+          </label>
+        </div>
+
+        <button id="convertButton" class="button primary full" type="button" disabled>Convertir artículo</button>
+      </aside>
+
+      <section class="result-panel" aria-live="polite">
+        <div id="emptyState" class="empty-state">
+          <div aria-hidden="true">MDX → LI</div>
+          <h2>La vista previa aparecerá acá</h2>
+          <p>Cargá un archivo o probá el ejemplo. No hace falta iniciar sesión ni entregar credenciales.</p>
+        </div>
+
+        <div id="resultState" class="result-state" hidden>
+          <div class="result-header">
+            <div>
+              <p class="eyebrow">Resultado local</p>
+              <h2 id="resultTitle">Artículo</h2>
+              <div id="stats" class="stats" aria-label="Estadísticas del artículo"></div>
+            </div>
+            <div class="result-actions">
+              <button id="copyTitleButton" class="button secondary" type="button">Copiar título</button>
+              <button id="copyRichButton" class="button primary" type="button">Copiar cuerpo enriquecido</button>
+            </div>
+          </div>
+
+          <nav class="tabs" aria-label="Vistas del resultado">
+            <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="preview">Artículo</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab="post">Post corto</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab="assets">Imágenes <span id="assetCount">0</span></button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab="diagnostics">Diagnóstico <span id="warningCount">0</span></button>
+          </nav>
+
+          <div id="previewTab" class="tab-panel active" role="tabpanel">
+            <div class="article-frame">
+              <div class="article-title-block">
+                <small>Título · se pega por separado</small>
+                <h1 id="previewTitle"></h1>
+              </div>
+              <article id="articlePreview" class="article-preview"></article>
+            </div>
+          </div>
+
+          <div id="postTab" class="tab-panel" role="tabpanel" hidden>
+            <div class="editor-card">
+              <div class="editor-card-header">
+                <div>
+                  <h3>Post de difusión</h3>
+                  <p>Texto plano para el feed. Podés editarlo antes de copiar.</p>
+                </div>
+                <span id="postCharacterCount" class="character-count">0 caracteres</span>
+              </div>
+              <textarea id="postOutput" rows="14" spellcheck="true"></textarea>
+              <button id="copyPostButton" class="button primary" type="button">Copiar post</button>
+            </div>
+          </div>
+
+          <div id="assetsTab" class="tab-panel" role="tabpanel" hidden>
+            <div class="section-intro">
+              <h3>Cola de imágenes</h3>
+              <p>Insertalas manualmente donde aparezcan los marcadores del artículo.</p>
+            </div>
+            <ol id="assetList" class="asset-list"></ol>
+          </div>
+
+          <div id="diagnosticsTab" class="tab-panel" role="tabpanel" hidden>
+            <div class="section-intro">
+              <h3>Compatibilidad</h3>
+              <p>Las advertencias no bloquean la conversión: indican qué conviene revisar en LinkedIn.</p>
+            </div>
+            <ul id="warningList" class="warning-list"></ul>
+          </div>
+
+          <footer class="export-bar">
+            <div>
+              <strong>Exportar respaldo</strong>
+              <span>HTML, texto plano o manifiesto JSON.</span>
+            </div>
+            <div class="export-actions">
+              <button id="downloadHtmlButton" class="text-button" type="button">Descargar HTML</button>
+              <button id="downloadTextButton" class="text-button" type="button">Descargar TXT</button>
+              <button id="downloadManifestButton" class="text-button" type="button">Descargar manifiesto</button>
+              <a class="button linkedin" href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">Abrir LinkedIn ↗</a>
+            </div>
+          </footer>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

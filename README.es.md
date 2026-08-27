@@ -36,6 +36,7 @@ Los primeros módulos públicos están enfocados en la integración entre Stream
 * Acción completa de migración para Streamer.bot.
 * Script independiente de migración para integraciones personalizadas.
 * Integración sencilla con flujos de automatización existentes.
+* [LinkedIn Publisher](PublisherSuite/Linkedin/README.es.md): conversor local de MDX con vista previa, copiado enriquecido, diagnóstico y exportaciones.
 
 ## 🔮 Hoja de Ruta
 
