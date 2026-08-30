@@ -1,0 +1,25 @@
+{
+  "name": "@solarispkn/multiplatform-publisher",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Publicador local de Markdown/MDX con adaptación y conectores oficiales por plataforma.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "npm run build && node scripts/server.mjs",
+    "serve": "node scripts/server.mjs",
+    "plan": "node scripts/prepare.mjs",
+    "audit:profiles": "node scripts/audit-profiles.mjs",
+    "test": "node --test",
+    "check": "npm run test && npm run build"
+  },
+  "dependencies": {
+    "@solarispkn/linkedin-publisher": "file:../Linkedin"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
+}

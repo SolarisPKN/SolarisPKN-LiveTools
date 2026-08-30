@@ -37,6 +37,8 @@ The first public modules focus on integration between StreamElements and Streame
 * Standalone migration script for custom integrations.
 * Easy integration into existing automation workflows.
 * [LinkedIn Publisher](PublisherSuite/Linkedin/README.md): local MDX conversion with preview, rich clipboard copy, diagnostics, and exports.
+* [Multiplatform Publisher](PublisherSuite/Multiplatform/README.md): one Markdown/MDX source, platform-specific adapters, official APIs, SHA-256 review, and a Windows `.cmd` launcher.
+* [Video Publisher](PublisherSuite/VideoPublisher/README.md): one long video plus one vertical short, local review, serial publishing queue, and official API adapters.
 
 ## 🔮 Future Roadmap
 

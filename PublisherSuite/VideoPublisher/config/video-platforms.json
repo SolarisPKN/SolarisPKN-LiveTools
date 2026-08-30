@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-08-29",
+  "destinations": [
+    {"id":"youtube-long","name":"YouTube · video largo","role":"long","mode":"api-local","profile":"https://youtube.com/@SolarisPKN"},
+    {"id":"youtube-short","name":"YouTube Shorts","role":"short","mode":"api-local","profile":"https://youtube.com/@SolarisPKN"},
+    {"id":"facebook-reel","name":"Facebook Page Reel","role":"short","mode":"api-local","profile":"https://facebook.com/solarispkn"},
+    {"id":"instagram-reel","name":"Instagram Reel","role":"short","mode":"api-url","profile":"https://instagram.com/solarispkn"},
+    {"id":"tiktok","name":"TikTok","role":"short","mode":"api-local","profile":"https://tiktok.com/@solarispkn"},
+    {"id":"threads-video","name":"Threads video","role":"short","mode":"api-url","profile":"https://www.threads.com/@solarispkn"},
+    {"id":"vimeo-long","name":"Vimeo","role":"long","mode":"api-local","profile":"https://vimeo.com/solarispkn"},
+    {"id":"linkedin-video","name":"LinkedIn video","role":"short","mode":"api-local","profile":"https://linkedin.com/in/solarispkn"},
+    {"id":"dailymotion","name":"Dailymotion","role":"long","mode":"assisted","profile":"https://www.dailymotion.com/user/SolarisPKN"},
+    {"id":"twitch","name":"Twitch","role":"long","mode":"no-upload-api","profile":"https://twitch.tv/solarispkn"},
+    {"id":"kick","name":"Kick","role":"long","mode":"no-upload-api","profile":"https://kick.com/Solarispkn"},
+    {"id":"rumble","name":"Rumble","role":"long","mode":"assisted","profile":"https://rumble.com/user/PabloKoutaNya"},
+    {"id":"nimo","name":"Nimo TV","role":"long","mode":"no-upload-api","profile":"https://www.nimo.tv/live/6943165843"},
+    {"id":"soop","name":"SOOP Live","role":"long","mode":"no-upload-api","profile":"https://www.sooplive.com/station/pablokoutany"},
+    {"id":"imdb","name":"IMDb","role":"long","mode":"no-upload-api","profile":"https://www.imdb.com/es/user/p.2sdmbkk3deexakbdrhka4wdauu"},
+    {"id":"mastodon-video","name":"Mastodon video","role":"short","mode":"planned","profile":"https://mastodon.social/@SolarisPKN"},
+    {"id":"bluesky-video","name":"Bluesky video","role":"short","mode":"planned","profile":"https://bsky.app/profile/solarispkn.com.ar"},
+    {"id":"pinterest-video","name":"Pinterest Video Pin","role":"short","mode":"planned","profile":"https://ar.pinterest.com/solarispkn/"},
+    {"id":"flickr-video","name":"Flickr video","role":"short","mode":"assisted","profile":"https://www.flickr.com/people/204857773@N06/"},
+    {"id":"pixelfed-video","name":"Pixelfed video","role":"short","mode":"instance-dependent","profile":"https://pixelfed.com/SolarisPKN"},
+    {"id":"x-video","name":"X video","role":"short","mode":"paid","profile":"https://x.com/SolarisPKN"}
+  ]
+}

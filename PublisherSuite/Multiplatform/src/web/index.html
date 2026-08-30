@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Publicador local multiplataforma de SolarisPKN.">
+  <title>SolarisPKN · Multiplatform Publisher</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#main" aria-label="Ir al publicador">
+      <span class="brand-mark">S</span>
+      <span><strong>SolarisPKN</strong><small>Multiplatform Publisher</small></span>
+    </a>
+    <div class="privacy-pill"><span></span>Local · tokens fuera del navegador</div>
+  </header>
+
+  <main id="main" class="shell">
+    <section class="hero">
+      <p class="eyebrow">PublisherSuite / Multiplatform</p>
+      <h1>Un Markdown. Cada plataforma habla su idioma.</h1>
+      <p>Prepará artículos, posts, captions y mensajes desde una única fuente. El sistema muestra exactamente qué puede publicar por API, qué necesita media y qué queda asistido.</p>
+      <div class="hero-rules">
+        <span>Vista previa obligatoria</span><span>Sin bots de navegador</span><span>Sin tokens en archivos web</span>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <aside class="composer">
+        <div class="section-heading"><b>01</b><div><h2>Contenido fuente</h2><p>Markdown o MDX, hasta 2 MiB.</p></div></div>
+        <div id="dropZone" class="drop-zone">
+          <input id="sourceFile" type="file" accept=".md,.mdx,text/markdown,text/plain" hidden>
+          <span class="drop-mark">↥</span>
+          <strong id="sourceName">Soltá el archivo acá</strong>
+          <small id="sourceSize">o elegilo desde el equipo</small>
+          <button id="chooseSource" class="button secondary" type="button">Elegir Markdown</button>
+          <button id="loadDemo" class="text-button" type="button">Usar ejemplo seguro</button>
+        </div>
+
+        <label class="file-picker"><span><strong>Metadatos JSON</strong><small>title, description, tags, canonicalUrl, coverImage, language.</small></span><input id="metadataFile" type="file" accept=".json,application/json"></label>
+        <p id="metadataStatus" class="inline-status"></p>
+
+        <div class="form-grid">
+          <label><span>Título (opcional)</span><input id="title" type="text" maxlength="240" placeholder="Se infiere del H1 o JSON"></label>
+          <label><span>Descripción</span><textarea id="description" rows="4" maxlength="1400" placeholder="Resumen para redes"></textarea></label>
+          <label><span>URL canónica</span><input id="canonicalUrl" type="url" placeholder="https://labs.solarispkn.com.ar/es/blog/..."></label>
+          <label><span>Imagen de portada pública</span><input id="coverImage" type="url" placeholder="https://..."><small>Obligatoria para Instagram y Pinterest.</small></label>
+          <label><span>Hashtags</span><input id="tags" type="text" placeholder="SolarisPKN, Linux, OpenSource"></label>
+          <label><span>Idioma</span><input id="language" type="text" value="es" maxlength="12"></label>
+        </div>
+
+        <div class="section-heading compact"><b>02</b><div><h2>Destinos</h2><p>La selección forma parte del SHA-256.</p></div></div>
+        <div id="targetPicker" class="target-picker"><p class="loading">Cargando capacidades…</p></div>
+        <button id="prepareButton" class="button primary full" type="button" disabled>Preparar vista previa</button>
+      </aside>
+
+      <section class="results">
+        <div id="emptyState" class="empty-state">
+          <div>MDX → ∞</div>
+          <h2>Acá aparece el plan de publicación</h2>
+          <p>Ningún contenido sale de la computadora al preparar. Publicar requiere una segunda acción explícita.</p>
+        </div>
+
+        <div id="planState" hidden>
+          <header class="plan-header">
+            <div><p class="eyebrow">Plan confirmado localmente</p><h2 id="planTitle"></h2><p id="planStats"></p></div>
+            <div class="digest"><small>SHA-256</small><code id="digest"></code></div>
+          </header>
+          <div id="globalWarnings" class="global-warnings"></div>
+          <div id="targetCards" class="target-cards"></div>
+
+          <section class="publish-box">
+            <div>
+              <p class="eyebrow">03 / Publicación real</p>
+              <h2>Última barrera antes de salir</h2>
+              <p>Sólo se enviarán los destinos marcados que estén configurados. Los fallos son independientes y generan un recibo local.</p>
+            </div>
+            <label class="confirm-check"><input id="reviewed" type="checkbox"> Revisé cada adaptación, URL, imagen y destino.</label>
+            <label><span>Escribí <code>PUBLICAR</code></span><input id="confirmation" type="text" autocomplete="off" placeholder="PUBLICAR"></label>
+            <button id="publishButton" class="button danger full" type="button" disabled>Publicar destinos seleccionados</button>
+            <div id="publishResults" class="publish-results" aria-live="polite"></div>
+          </section>
+        </div>
+      </section>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "source": "https://manifiesto.solarispkn.com.ar/#presencia",
+  "checkedOn": "2026-08-29",
+  "declaredCount": 109,
+  "categories": [
+    {
+      "id": "code",
+      "name": "Código y desarrollo",
+      "profiles": [
+        ["GitHub","https://github.com/SolarisPKN"],["GitLab","https://gitlab.com/SolarisPKN"],["Codeberg","https://codeberg.org/SolarisPKN"],["Gitea","https://gitea.com/SolarisPKN"],["Bitbucket","https://bitbucket.org/solarispkn/workspace/overview"],["GitFlic","https://gitflic.ru/user/solarispkn"],["Launchpad","https://launchpad.net/~solarispkn"],["SourceForge","https://sourceforge.net/u/solarispkn/profile/"],["StackBlitz","https://stackblitz.com/@SolarisPKN"],["CodeSandbox","https://codesandbox.io/u/SolarisPKN"],["CodePen","https://codepen.io/SolarisPKN"],["JSFiddle","https://jsfiddle.net/u/SolarisPKN"],["Dev.to","https://dev.to/solarispkn"],["Hashnode","https://hashnode.com/@solarispkn"],["Medium","https://medium.com/@SolarisPKN"],["daily.dev","https://daily.dev/solarispkn"],["Read the Docs","https://app.readthedocs.org/profiles/SolarisPKN/"],["Product Hunt","https://www.producthunt.com/@solarispkn"],["Indie Hackers","https://www.indiehackers.com/SolarisPKN"],["Peerlist","https://peerlist.io/solarispkn"],["Linear","https://linear.app/solarispkn/"],["Figma","https://www.figma.com/@SolarisPKN"],["v0","https://v0.app/@solarispkn"],["Lovable","https://lovable.dev/@solarispkn"],["Base44","https://app.base44.com/@solarispkn"],["Appsmith","https://solarispkn.appsmith.com/"]
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "name": "Infraestructura e IA",
+      "profiles": [
+        ["Docker Hub","https://hub.docker.com/repositories/solarispkn"],["Vercel","https://vercel.com/solarispkn"],["Railway","https://railway.com/u/solarispkn"],["Hugging Face","https://huggingface.co/SolarisPKN"],["Replicate","https://replicate.com/solarispkn/"],["Kaggle","https://www.kaggle.com/solarispkn"],["Tableau Public","https://public.tableau.com/app/profile/solaris.pkn/vizzes"],["Civitai","https://civitai.com/user/SolarisPKN"],["Wokwi","https://wokwi.com/makers/solarispkn"],["Arduino Project Hub","https://projecthub.arduino.cc/pablokoutanya"],["Open Collective","https://opencollective.com/solarispkn"],["Matrix","https://matrix.to/#/@solarispkn:matrix.org"]
+      ]
+    },
+    {
+      "id": "streaming",
+      "name": "Streaming y video",
+      "profiles": [
+        ["YouTube","https://youtube.com/@SolarisPKN"],["Twitch","https://twitch.tv/solarispkn"],["Kick","https://kick.com/Solarispkn"],["TikTok","https://tiktok.com/@solarispkn"],["Rumble","https://rumble.com/user/PabloKoutaNya"],["Dailymotion","https://www.dailymotion.com/user/SolarisPKN"],["Vimeo","https://vimeo.com/solarispkn"],["Nimo TV","https://www.nimo.tv/live/6943165843"],["SOOP Live","https://www.sooplive.com/station/pablokoutany"],["IMDb","https://www.imdb.com/es/user/p.2sdmbkk3deexakbdrhka4wdauu"]
+      ]
+    },
+    {
+      "id": "community",
+      "name": "Redes y comunidad",
+      "profiles": [
+        ["LinkedIn","https://linkedin.com/in/solarispkn"],["Discord","https://discord.gg/A9DW7S7Kaz"],["X","https://x.com/SolarisPKN"],["Instagram","https://instagram.com/solarispkn"],["Facebook","https://facebook.com/solarispkn"],["Threads","https://www.threads.com/@solarispkn"],["Bluesky","https://bsky.app/profile/solarispkn.com.ar"],["Mastodon","https://mastodon.social/@SolarisPKN"],["Pixelfed","https://pixelfed.com/SolarisPKN"],["Reddit","https://www.reddit.com/user/TecnOtakus/"],["Tumblr","https://www.tumblr.com/solarispkn/"],["Pinterest","https://ar.pinterest.com/solarispkn/"],["Truth Social","https://truthsocial.com/@SolarisPKN"],["Flickr","https://www.flickr.com/people/204857773@N06/"],["Blogger","https://www.blogger.com/profile/01814088620497240673"],["Goodreads","https://goodreads.com/solarispkn/"],["Gravatar","https://gravatar.com/solarispkn"],["Linktree","https://linktr.ee/SolarisPKN"]
+      ]
+    },
+    {
+      "id": "gaming",
+      "name": "Gaming y mods",
+      "profiles": [
+        ["CurseForge","https://www.curseforge.com/members/solarispkn/projects"],["Modrinth","https://modrinth.com/user/SolarisPKN"],["Nexus Mods","https://www.nexusmods.com/profile/SolarisPKN"],["SpigotMC","https://www.spigotmc.org/members/pablokoutanya.128496/"],["BuiltByBit","https://builtbybit.com/members/solarispkn.890582/"],["Planet Minecraft","https://www.planetminecraft.com/member/solarispkn/"],["Sandbox Galaxy","https://www.sandboxgalaxy.com/member/solarispkn/"],["Steam","https://steamcommunity.com/id/pablokoutanya/"],["Xbox","https://www.xbox.com/es-MX/play/user/SolarisPKN"],["Roblox","https://www.roblox.com/es/users/5863697496/profile"],["itch.io","https://solarispkn.itch.io/"],["Newgrounds","https://solarispkn.newgrounds.com/"],["Epic Dev Community","https://dev.epicgames.com/community/profile/WmndD/SolarisPKN"]
+      ]
+    },
+    {
+      "id": "design",
+      "name": "Diseño y arte",
+      "profiles": [
+        ["ArtStation","https://www.artstation.com/solarispkn"],["DeviantArt","https://www.deviantart.com/pablokoutanya"],["Dribbble","https://dribbble.com/SolarisPKN"],["Sketchfab","https://sketchfab.com/SolarisPKN"],["Pixiv","https://www.pixiv.net/en/users/62481761"],["VGen","https://vgen.co/SolarisPKN"],["Tapas","https://tapas.io/SolarisPKN"]
+      ]
+    },
+    {
+      "id": "work",
+      "name": "Trabajo y apoyo",
+      "profiles": [
+        ["Workana","https://www.workana.com/freelancer/69639f3a7401c8ef1bdd82572b8a51ba"],["Upwork","https://www.upwork.com/freelancers/~012a19a4f28dd326c5"],["Fiverr","https://www.fiverr.com/sellers/pablokoutanya"],["Freelancer","https://www.freelancer.es/u/PabloKoutaNya"],["CGHero","https://app.cghero.com/hire/SolarisPKN"],["Devoted Fusion","https://app.devotedfusion.com/u/solarisp5958"],["ADPList","https://adplist.org/members/user-87709d-msghljzd"],["Calendly","https://calendly.com/solarispkn"],["Patreon","https://www.patreon.com/cw/SolarisPKN"],["Ko-fi","https://ko-fi.com/solarispkn"],["Cafecito","https://cafecito.app/solarispkn"],["Gumroad","https://solarispkn.gumroad.com/"],["Etsy","https://www.etsy.com/es/people/0w8wiyoqp0da4tra"],["eBay","https://www.ebay.com/usr/solarispkn"],["Spotify","https://open.spotify.com/user/21hdk3nngnrfze7epsc6lbz6i"]
+      ]
+    },
+    {
+      "id": "education",
+      "name": "Formación y credenciales",
+      "profiles": [
+        ["ORCID","https://orcid.org/0009-0008-3003-1736"],["Microsoft Learn","https://learn.microsoft.com/es-mx/users/solarispkn/"],["freeCodeCamp","https://www.freecodecamp.org/solarispkn"],["edX","https://profile.edx.org/u/SolarisPKN"],["Udemy","https://www.udemy.com/user/pablokoutanya/"],["Salesforce Trailblazer","https://www.salesforce.com/trailblazer/solarispkn"],["LeetCode","https://leetcode.com/u/SolarisPKN/"],["Codeforces","https://codeforces.com/profile/SolarisPKN"]
+      ]
+    }
+  ]
+}
+

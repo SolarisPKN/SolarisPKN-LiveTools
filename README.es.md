@@ -37,6 +37,8 @@ Los primeros módulos públicos están enfocados en la integración entre Stream
 * Script independiente de migración para integraciones personalizadas.
 * Integración sencilla con flujos de automatización existentes.
 * [LinkedIn Publisher](PublisherSuite/Linkedin/README.es.md): conversor local de MDX con vista previa, copiado enriquecido, diagnóstico y exportaciones.
+* [Multiplatform Publisher](PublisherSuite/Multiplatform/README.es.md): una fuente Markdown/MDX, adaptación por plataforma, APIs oficiales, revisión por SHA-256 y launcher `.cmd`.
+* [Video Publisher](PublisherSuite/VideoPublisher/README.es.md): un video largo y un short vertical, editor local, cola serial, límite diario y adaptadores oficiales.
 
 ## 🔮 Hoja de Ruta
 

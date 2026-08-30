@@ -1,0 +1,8 @@
+**/node_modules/
+**/.npm-cache/
+**/dist/
+**/output/
+**/audit-output/
+**/config.local.json
+**/*.local.json
+PublisherSuite/VideoPublisher/media/

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark"><title>SolarisPKN Video Publisher</title>
+  <link rel="stylesheet" href="/styles.css"><script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div><p class="eyebrow">SOLARISPKN · DISTRIBUCIÓN EDITORIAL</p><h1>Un largo. Un short.<br><span>Una sola revisión.</span></h1><p class="lead">Prepará una pieza larga y su versión vertical, adaptá los textos y distribuí mediante APIs oficiales sin convertir el proceso en una fábrica de spam.</p></div>
+    <aside><strong id="sessionStatus">Conectando…</strong><span id="dailyLimit"></span><span>Los videos y tokens no salen del flujo elegido.</span></aside>
+  </header>
+
+  <main>
+    <section class="panel"><div class="section-heading"><span>01</span><div><h2>Archivos maestros</h2><p>Subí los dos archivos que ya editaste. Esta versión no recorta ni recomprime.</p></div></div>
+      <div class="media-grid">
+        <article class="media-slot" data-role="long"><input id="longFile" type="file" accept="video/*" hidden><div><span class="format">16:9 · LARGO</span><h3>Video principal</h3><p>YouTube, Vimeo y destinos de video largo.</p></div><button id="chooseLong" type="button">Elegir video largo</button><progress id="longProgress" max="100" value="0" hidden></progress><div id="longInfo" class="file-info">Todavía no cargado.</div></article>
+        <article class="media-slot accent" data-role="short"><input id="shortFile" type="file" accept="video/*" hidden><div><span class="format">9:16 · VERTICAL</span><h3>Short / Reel</h3><p>YouTube Shorts, TikTok, Reels y redes sociales.</p></div><button id="chooseShort" type="button">Elegir short</button><progress id="shortProgress" max="100" value="0" hidden></progress><div id="shortInfo" class="file-info">Todavía no cargado.</div></article>
+      </div>
+    </section>
+
+    <section class="panel"><div class="section-heading"><span>02</span><div><h2>Edición editorial</h2><p>El largo cuenta la historia; el short invita a verla.</p></div></div>
+      <div class="form-grid">
+        <label class="wide">Título principal<input id="title" maxlength="200" placeholder="Qué hicimos y por qué importa"></label>
+        <label>Título corto<input id="shortTitle" maxlength="200" placeholder="Versión más directa"></label>
+        <label>Idioma<input id="language" value="es" maxlength="20"></label>
+        <label class="wide">Descripción larga<textarea id="longDescription" rows="8" placeholder="Descripción completa, capítulos, contexto y créditos"></textarea></label>
+        <label class="wide">Caption corto<textarea id="shortCaption" rows="4" placeholder="Gancho breve. Si queda vacío, se usa la primera oración de la descripción."></textarea></label>
+        <label>Hashtags<input id="hashtags" placeholder="SolarisPKN, ingenieria, tecnologia"></label>
+        <label>Tags de YouTube<input id="tags" placeholder="automatización, infraestructura, tutorial"></label>
+        <label>URL canónica HTTPS<input id="canonicalUrl" type="url" placeholder="https://solarispkn.com.ar/..."></label>
+        <label>URL pública del short<input id="publicShortUrl" type="url" placeholder="Necesaria para Instagram y Threads"></label>
+        <label>Portada pública<input id="coverImageUrl" type="url" placeholder="https://.../cover.jpg"></label>
+        <label>Texto alternativo<input id="altText" maxlength="1500" placeholder="Descripción accesible del video"></label>
+        <label>Visibilidad<select id="visibility"><option value="private">Privado / borrador seguro</option><option value="unlisted">No listado</option><option value="public">Público</option></select></label>
+        <label>Categoría YouTube<input id="youtubeCategoryId" value="28" inputmode="numeric"></label>
+        <label class="check"><input id="madeForKids" type="checkbox"> Está creado para niños</label>
+        <label class="check"><input id="containsSyntheticMedia" type="checkbox"> Contiene medios sintéticos realistas</label>
+      </div>
+    </section>
+
+    <section class="panel"><div class="section-heading"><span>03</span><div><h2>Destinos</h2><p>“Asistido” significa exactamente eso: se prepara, pero no se inventa una API.</p></div></div><div id="targetPicker" class="target-grid"></div></section>
+
+    <section class="action-bar"><div><strong>Primero se prepara; nada se publica.</strong><p>El SHA-256 une archivos, textos y destinos.</p></div><button id="prepareButton" class="primary" type="button">Preparar vista previa</button></section>
+
+    <section id="emptyState" class="empty"><span>◌</span><h2>La vista previa aparecerá acá</h2><p>Cargá los archivos, escribí los metadatos y elegí los destinos.</p></section>
+    <section id="planState" class="panel" hidden><div class="plan-head"><div><p class="eyebrow">PLAN CONFIRMABLE</p><h2 id="planTitle"></h2><p id="planStats"></p></div><code id="digest"></code></div><div id="mediaWarnings"></div><div id="targetCards" class="cards"></div>
+      <div class="publish-gate"><h2>Publicación real</h2><p>La cola es serial. El video largo de YouTube va primero para que su URL pueda reutilizarse en campañas posteriores.</p><label class="check"><input id="reviewed" type="checkbox"> Revisé archivos, visibilidad, captions y destinos.</label><label>Confirmación literal<input id="confirmation" autocomplete="off" placeholder="PUBLICAR VIDEO"></label><button id="publishButton" class="danger" type="button" disabled>Publicar destinos marcados</button><div id="publishResults"></div></div>
+    </section>
+  </main>
+  <div id="toast" class="toast" hidden></div>
+</body></html>

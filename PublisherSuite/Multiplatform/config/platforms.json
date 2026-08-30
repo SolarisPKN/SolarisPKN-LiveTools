@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "defaults": ["solarispkn-blog", "devto", "linkedin", "mastodon", "bluesky", "threads"],
+  "platforms": [
+    {"id":"solarispkn-blog","name":"SolarisPKN Labs Blog","mode":"bundle","format":"article","cost":"free","profile":"https://labs.solarispkn.com.ar/es/blog"},
+    {"id":"devto","name":"DEV Community","mode":"api","format":"article","cost":"free","profile":"https://dev.to/solarispkn"},
+    {"id":"medium","name":"Medium","mode":"assisted","format":"article","cost":"legacy","profile":"https://medium.com/@SolarisPKN"},
+    {"id":"hashnode","name":"Hashnode","mode":"assisted","format":"article","cost":"pro","profile":"https://hashnode.com/@solarispkn"},
+    {"id":"blogger","name":"Blogger","mode":"api","format":"article","cost":"free","profile":"https://www.blogger.com/profile/01814088620497240673"},
+    {"id":"tumblr","name":"Tumblr","mode":"api","format":"article","cost":"free","profile":"https://www.tumblr.com/solarispkn/"},
+    {"id":"linkedin","name":"LinkedIn","mode":"api","format":"social","cost":"free","profile":"https://linkedin.com/in/solarispkn"},
+    {"id":"facebook","name":"Facebook Page","mode":"api","format":"social","cost":"free","profile":"https://facebook.com/solarispkn"},
+    {"id":"instagram","name":"Instagram","mode":"api-media","format":"caption","cost":"free","profile":"https://instagram.com/solarispkn"},
+    {"id":"threads","name":"Threads","mode":"api","format":"social","cost":"free","profile":"https://www.threads.com/@solarispkn"},
+    {"id":"mastodon","name":"Mastodon","mode":"api","format":"social","cost":"free","profile":"https://mastodon.social/@SolarisPKN"},
+    {"id":"bluesky","name":"Bluesky","mode":"api","format":"social","cost":"free","profile":"https://bsky.app/profile/solarispkn.com.ar"},
+    {"id":"reddit","name":"Reddit","mode":"api","format":"discussion","cost":"free","profile":"https://www.reddit.com/user/TecnOtakus/"},
+    {"id":"pinterest","name":"Pinterest","mode":"api-media","format":"pin","cost":"free","profile":"https://ar.pinterest.com/solarispkn/"},
+    {"id":"discord","name":"Discord","mode":"api","format":"message","cost":"free","profile":"https://discord.gg/A9DW7S7Kaz"},
+    {"id":"x","name":"X","mode":"assisted","format":"social","cost":"paid","profile":"https://x.com/SolarisPKN"},
+    {"id":"youtube","name":"YouTube","mode":"media-only","format":"video","cost":"free-audited","profile":"https://youtube.com/@SolarisPKN"},
+    {"id":"tiktok","name":"TikTok","mode":"media-only","format":"video-photo","cost":"free-audited","profile":"https://tiktok.com/@solarispkn"},
+    {"id":"vimeo","name":"Vimeo","mode":"media-only","format":"video","cost":"free-limited","profile":"https://vimeo.com/solarispkn"}
+  ]
+}
+
