@@ -1,0 +1,26 @@
+{
+  "listen": "127.0.0.1:8765",
+  "history_limit": 250,
+  "twitch": {
+    "enabled": false,
+    "channel": "YOUR_CHANNEL",
+    "nick": "YOUR_BOT_USERNAME",
+    "token_env": "MULTICHAT_TWITCH_TOKEN"
+  },
+  "youtube": {
+    "enabled": false,
+    "live_chat_id": "YOUR_LIVE_CHAT_ID",
+    "api_key_env": "MULTICHAT_YOUTUBE_API_KEY",
+    "poll_seconds": 20,
+    "daily_quota_units": 6000
+  },
+  "rumble": {
+    "enabled": false,
+    "api_url_env": "MULTICHAT_RUMBLE_API_URL",
+    "poll_seconds": 15
+  },
+  "ingest": {
+    "enabled": false,
+    "token_env": "MULTICHAT_INGEST_TOKEN"
+  }
+}
