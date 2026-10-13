@@ -40,6 +40,8 @@ Los primeros módulos públicos están enfocados en la integración entre Stream
 * [Multiplatform Publisher](PublisherSuite/Multiplatform/README.es.md): una fuente Markdown/MDX, adaptación por plataforma, APIs oficiales, revisión por SHA-256 y launcher `.cmd`.
 * [Video Publisher](PublisherSuite/VideoPublisher/README.es.md): un video largo y un short vertical, editor local, cola serial, límite diario y adaptadores oficiales.
 
+* [**MultiChat**](MultiChat/README.es.md): recolector de chats multistream en Go sin navegador por plataforma, visor unificado local/OBS, ingesta local autenticada y memoria acotada. MVP: Twitch, YouTube Live y Rumble; pendientes pruebas con cuentas reales.
+
 ## 🔮 Hoja de Ruta
 
 Las áreas de desarrollo planificadas incluyen:

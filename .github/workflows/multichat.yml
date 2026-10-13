@@ -1,0 +1,24 @@
+name: MultiChat
+on:
+  push:
+    paths:
+      - 'MultiChat/**'
+      - '.github/workflows/multichat.yml'
+  pull_request:
+    paths:
+      - 'MultiChat/**'
+      - '.github/workflows/multichat.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: MultiChat
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: MultiChat/go.mod
+      - run: go test ./...
+      - run: go vet ./...
+      - run: GOOS=windows GOARCH=amd64 go build -trimpath -o /tmp/MultiChat.exe .
