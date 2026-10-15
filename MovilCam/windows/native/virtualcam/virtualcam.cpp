@@ -206,8 +206,9 @@ public:
             }
         }
         if(got) lastSeen_=copied;
-        else if(lastSeen_==0) {
-            // Black NV12 fallback, valid video frames even before camera arrives.
+        else {
+            // Always output deterministic black when no valid frame exists.
+            // Never deliver uninitialized sample memory to apps after a disconnect.
             if(!useYUY2_) {
                 std::memset(dst,16,size_t(width_)*height_);
                 std::memset(dst+size_t(width_)*height_,128,nv12size-width_*height_);

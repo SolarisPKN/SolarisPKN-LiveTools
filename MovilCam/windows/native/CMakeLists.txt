@@ -31,8 +31,10 @@ if(MOVILCAM_DSHOW_BASE)
   file(GLOB BASECLASSES_CPP CONFIGURE_DEPENDS "${MOVILCAM_DSHOW_BASE}/*.cpp")
   add_library(movilcam_dshow_base STATIC ${BASECLASSES_CPP})
   target_include_directories(movilcam_dshow_base PUBLIC "${MOVILCAM_DSHOW_BASE}")
+  # Microsoft's legacy baseclasses call min/max macros directly.
+  # Never set NOMINMAX for this target; our own code remains NOMINMAX-safe.
   target_compile_definitions(movilcam_dshow_base PRIVATE
-      WIN32_LEAN_AND_MEAN NOMINMAX _WIN32_WINNT=0x0A00)
+      WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0A00)
   if(MSVC)
     target_compile_options(movilcam_dshow_base PRIVATE /w /EHsc)
   endif()
