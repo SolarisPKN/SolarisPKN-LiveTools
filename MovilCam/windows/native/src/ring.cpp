@@ -21,6 +21,7 @@ bool FrameRing::create(DWORD width, DWORD height) {
     std::memset(base_,0,static_cast<std::size_t>(size));
     stride_ = static_cast<DWORD>(stride);
     header_ = reinterpret_cast<RingHeader*>(base_);
+    header_->version = ring_version; // memset cleared the in-class default initializer.
     header_->width = width; header_->height = height;
     header_->pitch = width; header_->frameBytes = static_cast<DWORD>(payload);
     header_->slotStride = stride_;
