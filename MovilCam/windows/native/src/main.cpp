@@ -1,7 +1,11 @@
 // SolarisPKN MovilCam Windows Broker - console prototype.
 // 1 ADB TCP connection; 1 decoder; 3 NV12 shared memory slots for camera consumers.
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>

@@ -2,8 +2,12 @@
 // Interprocess triple-buffer. All data is *NV12*, no RGB conversion in bridge.
 // Producer publishes whole frames with slot seqlocks; readers never block capture.
 // Consumers must copy a slot and verify the sequence did not change.
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h>
 #include <cstdint>
 #include <cstddef>
@@ -37,7 +41,6 @@ struct alignas(64) RingHeader {
     volatile LONG64 totalFrames = 0;
     volatile LONG64 lastQpc = 0;
     volatile LONG64 dropped = 0;
-    std::uint8_t padding[0]{};
 };
 static_assert(sizeof(RingHeader)%64 == 0);
 
