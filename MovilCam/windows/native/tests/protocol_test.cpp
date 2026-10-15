@@ -1,4 +1,7 @@
 #include "protocol.hpp"
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <cassert>
 #include <array>
 int main() {

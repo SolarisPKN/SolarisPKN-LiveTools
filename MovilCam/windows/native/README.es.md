@@ -49,3 +49,15 @@ El protocolo actual por ADB y la memoria compartida de Windows **todavía no inc
 - Confirmar decodificación D3D11/Intel y comportamiento de memoria en GPU/CPU.
 - Implementar y probar filtro virtual Windows DirectShow y sus formatos NV12/RGB.
 - Comparar FPS, calor, estabilidad, latencia y CPU contra Iriun.
+
+## Cámara virtual DirectShow (Windows 10)
+
+La build de Windows también genera `MovilCamVirtualCamera.dll`. Es un filtro COM en modo usuario, no un driver de kernel. Su registro permite que las aplicaciones DirectShow de 64 bits intenten abrir `SolarisPKN MovilCam`; **la compatibilidad con Discord y apps modernas todavía no está verificada**.
+
+1. Descargá el artefacto `MovilCamBridge-win-x64` del workflow Windows y extraé ambos archivos.
+2. Desde PowerShell de 64 bits **con permisos de administrador**, ejecutá `windows/install-virtualcam.ps1 -Dll "C:\ruta\MovilCamVirtualCamera.dll"`.
+3. Desde PowerShell normal: `windows/start-native.ps1 -BridgeExe "C:\ruta\MovilCamBridge.exe"`. Debés tener la versión Android compatible con protocolo v2 instalada y autorizada por ADB.
+4. Abrí una aplicación que soporte DirectShow y buscá la fuente `SolarisPKN MovilCam`. Cuando el programa realmente empieza a capturar, el broker activa la cámara de Android.
+5. Para revertirlo, cerrá todas las aplicaciones que utilicen la fuente y ejecutá `windows/uninstall-virtualcam.ps1` desde PowerShell elevado.
+
+**Limitaciones:** En Windows 10 el filtro DirectShow no garantiza aparecer en todo software que solo utilice Media Foundation. El formato actual está orientado a 1080p30 y necesita que el lector y la resolución del broker coincidan. No modifiques una escena en producción sin haber probado la señal primero. La compilación CI verifica la instalación temporal y enumeración del filtro, pero no sustituye una prueba real de vídeo.
