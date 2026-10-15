@@ -4,6 +4,6 @@ Experimental dedicated Android USB webcam for OBS. Native Camera2 -> H.264 hardw
 
 Camera and encoder start **only after OBS connects** and are released after disconnect. Android 12 camera foreground service is started from a visible Activity via ADB.
 
-**Status:** source implementation; hardware test and APK build not yet verified on the Galaxy Note 10+. Build through Android SDK/Gradle or GitHub Actions.
+**Status (2026-10-15):** GitHub Actions built the debug APK and passed the H264 unit tests. Real video capture, thermals and OBS playback still need validation on the Galaxy Note 10+.
 
 For full installation, commands, debugging, power/thermal limitations and OBS settings: [README.es.md](README.es.md).
