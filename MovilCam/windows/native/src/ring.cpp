@@ -3,9 +3,9 @@
 #include <limits>
 
 namespace movilcam {
-bool FrameRing::create(DWORD width, DWORD height) {
+bool FrameRing::create(DWORD width, DWORD height, DWORD fps) {
     close();
-    if (!width || !height || width > 3840 || height > 2160 ||
+    if (fps < 1 || fps > 120 || !width || !height || width > 3840 || height > 2160 ||
         (width & 1) || (height & 1)) return false;
     const std::uint64_t payload = std::uint64_t(width) * height * 3 / 2;
     const std::uint64_t stride = ((sizeof(SlotHeader) + payload + 63) / 64) * 64;
@@ -22,7 +22,7 @@ bool FrameRing::create(DWORD width, DWORD height) {
     stride_ = static_cast<DWORD>(stride);
     header_ = reinterpret_cast<RingHeader*>(base_);
     header_->version = ring_version; // memset cleared the in-class default initializer.
-    header_->width = width; header_->height = height;
+    header_->width = width; header_->height = height; header_->fps = fps;
     header_->pitch = width; header_->frameBytes = static_cast<DWORD>(payload);
     header_->slotStride = stride_;
     // Publish magic last, to avoid consumers reading incomplete header.

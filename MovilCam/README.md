@@ -1,8 +1,8 @@
 # SolarisPKN MovilCam
 
-Experimental dedicated Android USB webcam for OBS. Native Camera2 -> H.264 hardware MediaCodec encoder -> loopback TCP over ADB -> OBS Media Source. No Iriun, scrcpy, WebView, camera preview, microphone or Internet service.
+Experimental dedicated Android USB webcam for OBS and DirectShow applications, targeting **1920x1080 at 60 FPS** with 12 Mbps H.264 hardware encoding. Native Camera2 -> H.264 hardware MediaCodec encoder -> loopback TCP over ADB -> OBS Media Source. No Iriun, scrcpy, WebView, camera preview, microphone or Internet service.
 
-Camera and encoder start **only after OBS connects** and are released after disconnect. Android 12 camera foreground service is started from a visible Activity via ADB.
+Camera and encoder start **only after a USB client connects** and are released after disconnect. Android 12 camera foreground service is started from a visible Activity via ADB.
 
 **Status (2026-10-15):** GitHub Actions built the debug APK and passed the H264 unit tests. Real video capture, thermals and OBS playback still need validation on the Galaxy Note 10+.
 

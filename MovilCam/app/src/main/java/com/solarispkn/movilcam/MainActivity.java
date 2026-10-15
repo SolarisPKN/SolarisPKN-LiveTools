@@ -92,8 +92,8 @@ public final class MainActivity extends Activity {
         Intent launch = getIntent();
         service.putExtra("width", safeInt(launch, "width", 1920, 320, 3840));
         service.putExtra("height", safeInt(launch, "height", 1080, 240, 2160));
-        service.putExtra("fps", safeInt(launch, "fps", 30, 5, 60));
-        service.putExtra("bitrate", safeInt(launch, "bitrate", 8_000_000, 500_000, 24_000_000));
+        service.putExtra("fps", safeInt(launch, "fps", 60, 5, 60));
+        service.putExtra("bitrate", safeInt(launch, "bitrate", 12_000_000, 500_000, 24_000_000));
         try {
             startForegroundService(service);
             status.setText("MovilCam ready (" + lens + "). Waiting for OBS USB client. " +
