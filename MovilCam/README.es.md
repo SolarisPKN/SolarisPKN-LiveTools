@@ -49,6 +49,16 @@ Alternativamente, comandos ADB puros:
 
 Se inicia una Activity solo para autorizar el inicio legal de un servicio de camara en primer plano. Despues no se necesita previsualizacion. Android 12+ restringe servicios de camara iniciados directamente desde segundo plano.
 
+## Usar MovilCam en OBS, Discord y otras aplicaciones (Windows 10)
+
+Ahora tambien existe un **motor nativo de Windows x64**: `MovilCamBridge.exe` y `MovilCamVirtualCamera.dll`. No requiere OBS abierto, Iriun ni navegador. El telefono envia un solo H.264, el broker lo decodifica una vez a NV12, y la DLL DirectShow lo distribuye a las aplicaciones compatibles.
+
+**[Guía de cámara virtual, instalación y selección de GPU](windows/native/README.es.md)**.
+
+En GitHub Actions, bajá los artefactos de los workflows **MovilCam Android** (APK) y **MovilCam Windows native** (EXE + DLL). Primero instalá el APK actualizado; después instalá la DLL DirectShow siguiendo la guía y ejecutá `windows/start-native.ps1 -BridgeExe "C:\ruta\MovilCamBridge.exe" -Gpu intel` (o `-Gpu auto`).
+
+**Todavía experimental:** la compilación de CI, las pruebas C++ y la detección COM de Windows están verificadas, pero aún hay que probar vídeo real en tu Note 10+ y compatibilidad de cada app. Se mantiene Iriun como alternativa.
+
 ## Conectar OBS sin plugin ni Browser Source
 
 En OBS: Fuentes > + > Fuente multimedia (Media Source).
