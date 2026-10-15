@@ -8,7 +8,7 @@ Diseñado para **Windows 10 LTSC 2021 (19044), x64**, i3-10105 y GPUs UHD 630 / 
 - TCP loopback mediante `adb forward tcp:27183 tcp:27183`.
 - Un saludo binario `MCAMV002` solicita al Android frames H.264 completos con marca de tiempo (el modo crudo anterior de OBS sigue disponible).
 - Media Foundation decodifica H.264 a NV12. Pide aceleración Direct3D 11 por defecto; si el driver no la admite correctamente, se debe revisar el log y probar `--software`. **No asumir que D3D11 activo implica hardware efectivo** hasta medir Video Decode por GPU.
-- Un ring de **tres buffers NV12** compartidos por Windows (`Local\\SolarisPKN_MovilCam_NV12_v1`). Cada buffer se publica con *seqlock* de 64 bits para evitar lectores de frames parcialmente escritos.
+- Un ring de **tres buffers NV12** compartidos por Windows (`Local\\SolarisPKN_MovilCam_NV12_v2`). Cada buffer se publica con *seqlock* de 64 bits para evitar lectores de frames parcialmente escritos.
 - No se renderiza UI ni se convierte a RGB en el broker. La **cámara virtual DirectShow** consume NV12 directamente; se puede registrar aparte con el script de Windows (todavía sin validar con el Note real).
 - Reintentos al perder conexión y límites de tamaño por frame. Sin colas de fotogramas ilimitadas.
 
@@ -32,6 +32,10 @@ En el Note debe estar instalada la versión MovilCam con protocolo v2 (posterior
 
 Para exponer la fuente a otras aplicaciones, también hay que registrar la DLL DirectShow con `windows/install-virtualcam.ps1`. Un programa que solo use Media Foundation podría no enumerarla.
 
+
+## Objetivo: 1080p a 60 FPS
+
+La webcam virtual DirectShow anuncia 60 FPS y recibe frames NV12 a traves del protocolo de memoria compartida v2, que registra el FPS negociado. **No baja a 30 FPS automaticamente**. Para la camara nativa usa `windows/start-native.ps1 -Fps 60 -BitrateMbps 12`. Si queres probar 30 FPS, por ahora utiliza la fuente multimedia H.264 directa de OBS, no el dispositivo virtual Windows. Medir el FPS efectivo en `adb logcat -s MovilCam:V`: los limites termicos y de Camera2 solo pueden comprobarse con el Samsung real.
 
 ## Selección de GPU para el decodificador
 
@@ -68,4 +72,4 @@ La build de Windows también genera `MovilCamVirtualCamera.dll`. Es un filtro CO
 4. Abrí una aplicación que soporte DirectShow y buscá la fuente `SolarisPKN MovilCam`. Cuando el programa realmente empieza a capturar, el broker activa la cámara de Android.
 5. Para revertirlo, cerrá todas las aplicaciones que utilicen la fuente y ejecutá `windows/uninstall-virtualcam.ps1` desde PowerShell elevado.
 
-**Limitaciones:** En Windows 10 el filtro DirectShow no garantiza aparecer en todo software que solo utilice Media Foundation. El formato actual está orientado a 1080p30 y necesita que el lector y la resolución del broker coincidan. No modifiques una escena en producción sin haber probado la señal primero. La compilación CI verifica la instalación temporal y enumeración del filtro, pero no sustituye una prueba real de vídeo.
+**Limitaciones:** En Windows 10 el filtro DirectShow no garantiza aparecer en todo software que solo utilice Media Foundation. El formato actual está orientado a **1080p60** y necesita que el lector y la resolución del broker coincidan. No modifiques una escena en producción sin haber probado la señal primero. La compilación CI verifica la instalación temporal y enumeración del filtro, pero no sustituye una prueba real de vídeo.

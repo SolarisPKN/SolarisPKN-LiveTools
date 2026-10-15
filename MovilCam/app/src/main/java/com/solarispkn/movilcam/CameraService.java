@@ -53,7 +53,7 @@ public final class CameraService extends Service {
     public static final int PORT = 27183;
 
     private volatile boolean running;
-    private volatile Options options = new Options("back", 1920, 1080, 30, 8_000_000);
+    private volatile Options options = new Options("back", 1920, 1080, 60, 12_000_000);
     private volatile ServerSocket listener;
     private volatile Socket currentClient;
     private Thread worker;
@@ -85,8 +85,8 @@ public final class CameraService extends Service {
                 "front".equalsIgnoreCase(lens) ? "front" : "back",
                 clamp(intent.getIntExtra("width", 1920), 320, 3840),
                 clamp(intent.getIntExtra("height", 1080), 240, 2160),
-                clamp(intent.getIntExtra("fps", 30), 5, 60),
-                clamp(intent.getIntExtra("bitrate", 8_000_000), 500_000, 24_000_000));
+                clamp(intent.getIntExtra("fps", 60), 5, 60),
+                clamp(intent.getIntExtra("bitrate", 12_000_000), 500_000, 24_000_000));
         }
 
         NotificationManager manager = getSystemService(NotificationManager.class);
@@ -243,7 +243,10 @@ public final class CameraService extends Service {
             request.addTarget(inputSurface);
             request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             Range<Integer> targetRange = selectFpsRange(traits, cfg.fps);
-            if (targetRange != null) request.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, targetRange);
+            if (targetRange == null)
+                throw new IOException("Camera does not advertise " + cfg.fps +
+                    " FPS AE range; refusing silent FPS downgrade");
+            request.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, targetRange);
             request.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
                 CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
             session.setRepeatingRequest(request.build(), null, cameraHandler);
@@ -254,6 +257,7 @@ public final class CameraService extends Service {
             byte[] frameHeader = new byte[16];
             byte[] parameterSets = new byte[0];
             int frames = 0;
+            long firstPtsUs = -1L;
             while (running && !Thread.currentThread().isInterrupted() && currentClient != null &&
                    !currentClient.isClosed()) {
                 int index = encoder.dequeueOutputBuffer(info, 150_000);
@@ -284,8 +288,17 @@ public final class CameraService extends Service {
                                 destination.flush();
                             }
                             frames++;
-                            if (frames == 1 || frames % 300 == 0)
-                                Log.i(TAG, "H264 frames sent: " + frames);
+                            if (firstPtsUs < 0) firstPtsUs = info.presentationTimeUs;
+                            if (frames == 1 || frames % 300 == 0) {
+                                long elapsedUs = info.presentationTimeUs - firstPtsUs;
+                                double measured = elapsedUs > 0 ?
+                                    (frames - 1) * 1_000_000.0 / elapsedUs : 0.0;
+                                Log.i(TAG, "H264 frames sent=" + frames +
+                                    " target=" + cfg.fps + " fps actual=" +
+                                    String.format(java.util.Locale.US, "%.2f", measured));
+                                if (frames > 1 && measured < cfg.fps * 0.9)
+                                    Log.w(TAG, "Effective FPS below target. Inspect Camera2, thermal throttling and power.");
+                            }
                         }
                     }
                     encoder.releaseOutputBuffer(index, false);
@@ -388,13 +401,15 @@ public final class CameraService extends Service {
         Range<Integer>[] ranges = characteristics.get(
             CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
         if (ranges == null || ranges.length == 0) return null;
-        Range<Integer> best = ranges[0];
-        int scoreBest = Integer.MAX_VALUE;
+        Range<Integer> best = null;
+        int bestScore = Integer.MAX_VALUE;
         for (Range<Integer> r : ranges) {
+            // Do not silently fall back from 60 to 30 FPS.
+            if (r.getLower() > fps || r.getUpper() < fps) continue;
             int score = Math.abs(r.getUpper() - fps) * 5 + Math.abs(r.getLower() - fps);
-            if (score < scoreBest) {
+            if (score < bestScore) {
                 best = r;
-                scoreBest = score;
+                bestScore = score;
             }
         }
         return best;

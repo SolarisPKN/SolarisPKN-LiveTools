@@ -9,7 +9,7 @@
 int main(){
     using namespace movilcam;
     FrameRing ring;
-    assert(ring.create(320,240));
+    assert(ring.create(320,240,60));
     std::vector<std::uint8_t> data(320*240*3/2,128);
     std::fill(data.begin(),data.begin()+320*240,16);
     assert(ring.publish(data.data(),data.size(),123456));
@@ -22,6 +22,7 @@ int main(){
     assert(h->magic==ring_magic && h->version==ring_version);
     assert(h->published==1 && h->totalFrames==1);
     assert(h->frameBytes==data.size());
+    assert(h->fps==60);
     auto* slot=reinterpret_cast<const SlotHeader*>(base+sizeof(RingHeader));
     assert(slot->sequence==2 && slot->timestamp100ns==123456);
     const auto* bytes=reinterpret_cast<const std::uint8_t*>(slot)+sizeof(SlotHeader);
@@ -31,10 +32,10 @@ int main(){
     ring.close();
     // Windows keeps mapped objects alive while a client holds a reference.
     // Broker must not recreate the ring while any consumer still has it open.
-    assert(!ring.create(320,240));
+    assert(!ring.create(320,240,60));
     UnmapViewOfFile(base);
     CloseHandle(map);
-    assert(ring.create(320,240));
+    assert(ring.create(320,240,60));
     ring.close();
     return 0;
 }

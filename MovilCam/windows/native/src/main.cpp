@@ -85,12 +85,16 @@ bool once(movilcam::GpuChoice gpu, const movilcam::ControlServer& users, movilca
         std::fprintf(stderr,"[MovilCam] Android app old version or protocol mismatch.\n");
         return false;
     }
+    if(h.fps != 60) {
+        std::fprintf(stderr,"[MovilCam] Native DirectShow output requires 60 FPS; Android reports %u.\n",h.fps);
+        return false;
+    }
     if(!ring.header()) {
-        if(!ring.create(h.width,h.height)) {
+        if(!ring.create(h.width,h.height,h.fps)) {
             std::fprintf(stderr,"[MovilCam] NV12 ring exists or memory failure. One broker only.\n");
             return false;
         }
-    } else if(ring.header()->width != h.width || ring.header()->height != h.height) {
+    } else if(ring.header()->width != h.width || ring.header()->height != h.height || ring.header()->fps != h.fps) {
         std::fprintf(stderr,"[MovilCam] Resolution changed: restart broker to renegotiate.\n");
         return false;
     }
@@ -102,7 +106,7 @@ bool once(movilcam::GpuChoice gpu, const movilcam::ControlServer& users, movilca
     std::printf("[MovilCam] %ux%u @ %u FPS, D3D11 requested=%s, active=%s\n",
                 h.width,h.height,h.fps,gpu!=movilcam::GpuChoice::Software?"yes":"no",
                 decoder.gpu_enabled()?"yes":"no");
-    std::printf("[MovilCam] NV12 triple-buffer: Local\\SolarisPKN_MovilCam_NV12_v1.\n");
+    std::printf("[MovilCam] NV12 triple-buffer: Local\\SolarisPKN_MovilCam_NV12_v2.\n");
     std::vector<std::uint8_t> payload;
     std::uint64_t packets=0, failures=0;
     while(run && users.clients()>0) {

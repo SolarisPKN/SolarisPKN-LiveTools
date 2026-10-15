@@ -16,9 +16,9 @@
 
 namespace movilcam {
 inline constexpr DWORD ring_magic = 0x4d43414d; // "MCAM"
-inline constexpr DWORD ring_version = 1;
+inline constexpr DWORD ring_version = 2;
 inline constexpr int ring_slots = 3;
-inline constexpr wchar_t ring_name[] = L"Local\\SolarisPKN_MovilCam_NV12_v1";
+inline constexpr wchar_t ring_name[] = L"Local\\SolarisPKN_MovilCam_NV12_v2";
 
 struct alignas(64) SlotHeader {
     volatile LONG64 sequence = 0; // odd means writing; even means stable
@@ -36,7 +36,7 @@ struct alignas(64) RingHeader {
     DWORD pitch = 0;
     DWORD frameBytes = 0;
     DWORD slotStride = 0;
-    DWORD reserved = 0;
+    DWORD fps = 60; // Native DirectShow capture rate; ring protocol v2
     volatile LONG64 published = 0; // increasing publish counter
     volatile LONG64 totalFrames = 0;
     volatile LONG64 lastQpc = 0;
@@ -55,7 +55,7 @@ public:
     FrameRing(const FrameRing&) = delete;
     FrameRing& operator=(const FrameRing&) = delete;
     ~FrameRing() { close(); }
-    bool create(DWORD width, DWORD height);
+    bool create(DWORD width, DWORD height, DWORD fps);
     void close() noexcept;
     bool publish(const std::uint8_t* nv12, std::size_t size, LONGLONG pts100ns) noexcept;
     [[nodiscard]] const RingHeader* header() const noexcept { return header_; }

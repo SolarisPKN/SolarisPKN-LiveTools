@@ -3,8 +3,8 @@ param(
   [ValidateSet('back','front')][string]$Lens = 'back',
   [ValidateRange(320,3840)][int]$Width = 1920,
   [ValidateRange(240,2160)][int]$Height = 1080,
-  [ValidateRange(5,60)][int]$Fps = 30,
-  [ValidateRange(1,24)][int]$BitrateMbps = 8,
+  [ValidateRange(5,60)][int]$Fps = 60,
+  [ValidateRange(1,24)][int]$BitrateMbps = 12,
   [string]$Serial = ''
 )
 $ErrorActionPreference = 'Stop'

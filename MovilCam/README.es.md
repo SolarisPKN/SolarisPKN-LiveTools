@@ -1,6 +1,6 @@
 # SolarisPKN MovilCam - Android USB camera para OBS
 
-Version 0.1 experimental. Proyecto Android puro (Java + Camera2 + MediaCodec) sin Iriun, scrcpy ni navegador. Pensado para Galaxy Note 10+ sin pantalla fisica, conectado por ADB.
+Version 0.2 experimental (1080p60). Proyecto Android puro (Java + Camera2 + MediaCodec) sin Iriun, scrcpy ni navegador. Pensado para Galaxy Note 10+ sin pantalla fisica, conectado por ADB.
 
 **Estado (15/10/2026):** GitHub Actions compilo correctamente el APK debug y aprobo las pruebas unitarias H.264. Falta instalarlo y verificar video, calidad, estabilidad y temperatura en el Note 10+ real. No se garantiza aun mejor temperatura ni calidad que Iriun.
 
@@ -8,7 +8,7 @@ Version 0.1 experimental. Proyecto Android puro (Java + Camera2 + MediaCodec) si
 
 - Camera2 escribe directamente a la Surface de MediaCodec H.264: no se muestran frames en Android.
 - Un servidor TCP escucha SOLO en 127.0.0.1:27183 del telefono; ADB hace el tunel USB.
-- La camara y el codificador permanecen APAGADOS si no hay cliente OBS.
+- La camara y el codificador permanecen APAGADOS si no hay ningun consumidor conectado (OBS directo o el motor Windows).
 - Al abrirse OBS, se habilita captura y flujo H.264 Annex-B.
 - Al desconectar el cliente, se libera la camara y MediaCodec.
 - Solo video, sin microfono, sin subida a Internet, sin WebView, sin vista previa.
@@ -39,13 +39,13 @@ Instala el APK y concede el permiso de camara desde ADB:
 
 Arranca desde Windows (no necesitas manejar ninguna UI Android):
 
-    .\start-movilcam.ps1 -Lens back -Width 1920 -Height 1080 -Fps 30 -BitrateMbps 8
+    .\start-movilcam.ps1 -Lens back -Width 1920 -Height 1080 -Fps 60 -BitrateMbps 12
 
 Alternativamente, comandos ADB puros:
 
     adb forward tcp:27183 tcp:27183
     adb shell pm grant com.solarispkn.movilcam android.permission.CAMERA
-    adb shell am start -n com.solarispkn.movilcam/.MainActivity --ez autostart true --es lens back --ei width 1920 --ei height 1080 --ei fps 30 --ei bitrate 8000000
+    adb shell am start -n com.solarispkn.movilcam/.MainActivity --ez autostart true --es lens back --ei width 1920 --ei height 1080 --ei fps 60 --ei bitrate 12000000
 
 Se inicia una Activity solo para autorizar el inicio legal de un servicio de camara en primer plano. Despues no se necesita previsualizacion. Android 12+ restringe servicios de camara iniciados directamente desde segundo plano.
 
@@ -72,7 +72,7 @@ IMPORTANTE: El soporte de H.264 sin contenedor sobre TCP depende de FFmpeg y tu 
 
 Prueba opcional con FFplay (solo uno conectado a la vez; cerrar fuente OBS):
 
-    ffplay -fflags nobuffer -flags low_delay -f h264 -framerate 30 -i tcp://127.0.0.1:27183
+    ffplay -fflags nobuffer -flags low_delay -f h264 -framerate 60 -i tcp://127.0.0.1:27183
 
 OBS puede reutilizar su unica fuente MovilCam en escenas de streaming y grabacion para evitar crear capturas dobles. No conectar dos clientes TCP simultaneos.
 
@@ -87,7 +87,7 @@ Para detener desde Windows:
 
 ## Rendimiento y limites
 
-1080p30 y 8 Mbps son valores de partida. MediaCodec usa el encoder H.264 de hardware del telefono si declara capacidad. El sensor, ISP, autoexposicion, autofocus y encoder siguen consumiendo energia. Desactivar la pantalla o la previsualizacion no garantiza menos calor que Iriun.
+**1080p60 a 12 Mbps** es la configuracion predeterminada, para igualar la señal de Iriun del usuario. Si el Note no anuncia un rango Camera2 compatible con 60 FPS, MovilCam lo registra como error en vez de reducir silenciosamente a 30. El logcat muestra `fps actual` medido en las marcas de tiempo H.264; para confirmar 60 FPS sostenidos hacen falta pruebas sobre el Note real. MediaCodec usa el encoder H.264 de hardware del telefono si declara capacidad. El sensor, ISP, autoexposicion, autofocus y encoder siguen consumiendo energia. Desactivar la pantalla o la previsualizacion no garantiza menos calor que Iriun.
 
 Sin pantalla fisica, Android aun requiere permisos CAMERA previamente otorgados, una Activity para el inicio de Foreground Service, y una fuente de alimentacion electrica estable.
 Si la fuente se congela, el proceso se puede diagnosticar con logcat y ADB. Si la alimentacion externa provoca caidas de voltaje, ningun cambio de software lo corrige.

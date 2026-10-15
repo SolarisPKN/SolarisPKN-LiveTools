@@ -24,7 +24,7 @@ class SharedReader {
     HANDLE handle_ = nullptr;
     const std::uint8_t* data_ = nullptr;
     const movilcam::RingHeader* hdr_ = nullptr;
-    DWORD width_ = 1920, height_ = 1080;
+    DWORD width_ = 1920, height_ = 1080, fps_ = 60;
     LONGLONG lastFrame_ = 0;
 public:
     ~SharedReader(){ close(); }
@@ -45,15 +45,16 @@ public:
         if(hdr_->magic != movilcam::ring_magic || hdr_->version != movilcam::ring_version ||
            hdr_->width < 160 || hdr_->width > kMaxDim || hdr_->height < 120 ||
            hdr_->height > 2160 || (hdr_->width & 1) || (hdr_->height & 1) ||
-           hdr_->pitch != hdr_->width ||
+           hdr_->pitch != hdr_->width || hdr_->fps != 60 ||
            hdr_->frameBytes != std::uint64_t(hdr_->width)*hdr_->height*3/2 ||
            hdr_->slotStride < hdr_->frameBytes+sizeof(movilcam::SlotHeader) ||
            hdr_->slotStride > 16*1024*1024) {close();return false;}
-        width_=hdr_->width; height_=hdr_->height;
+        width_=hdr_->width; height_=hdr_->height; fps_=hdr_->fps;
         return true;
     }
     DWORD width() const {return width_;}
     DWORD height() const {return height_;}
+    DWORD fps() const {return fps_;}
     LONGLONG latest() const {return hdr_ ? hdr_->published : 0;}
     bool isFresh() const {
         if(!hdr_ || hdr_->lastQpc==0) return false;
@@ -115,8 +116,8 @@ class CameraPin final : public CSourceStream, public IAMStreamConfig, public IKs
             demandPipe_=CreateFileW(movilcam::control_pipe,GENERIC_WRITE,0,
                                     nullptr,OPEN_EXISTING,0,nullptr);
     }
-    DWORD width_=1920,height_=1080,fps_=30;
-    REFERENCE_TIME frameTime_=333333;
+    DWORD width_=1920,height_=1080,fps_=60;
+    REFERENCE_TIME frameTime_=166667; // 60 FPS in 100 ns units
     REFERENCE_TIME sampleTime_=0;
     LONGLONG lastSeen_=0;
     bool useYUY2_=false;
@@ -125,7 +126,10 @@ class CameraPin final : public CSourceStream, public IAMStreamConfig, public IKs
 public:
     CameraPin(HRESULT* hr,CSource* parent):
         CSourceStream(NAME("SolarisPKN MovilCam output"),hr,parent,L"Capture"){
-        if(reader_.open()){width_=reader_.width();height_=reader_.height();}
+        if(reader_.open()){
+            width_=reader_.width();height_=reader_.height();fps_=reader_.fps();
+            frameTime_=(10000000LL+fps_/2)/fps_;
+        }
     }
     // IAMStreamConfig and IKsPropertySet both derive IUnknown. Delegate their
     // COM lifetime to the one controlling CSourceStream/CUnknown instance.
