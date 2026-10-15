@@ -1,0 +1,37 @@
+name: MovilCam Windows native
+
+on:
+  push:
+    paths:
+      - 'MovilCam/windows/native/**'
+      - '.github/workflows/movilcam-windows.yml'
+  pull_request:
+    paths:
+      - 'MovilCam/windows/native/**'
+      - '.github/workflows/movilcam-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure 64-bit CMake
+        shell: pwsh
+        run: cmake -S MovilCam/windows/native -B build/movilcam-windows -G "Visual Studio 17 2022" -A x64
+      - name: Build Release
+        shell: pwsh
+        run: cmake --build build/movilcam-windows --config Release --parallel
+      - name: Run native unit tests
+        shell: pwsh
+        run: ctest --test-dir build/movilcam-windows -C Release --output-on-failure
+      - name: Upload Windows bridge EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: MovilCamBridge-win-x64
+          path: build/movilcam-windows/Release/MovilCamBridge.exe
+          retention-days: 14

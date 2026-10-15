@@ -132,7 +132,8 @@ public final class CameraService extends Service {
                     try (Socket client = socket;
                          BufferedOutputStream out =
                              new BufferedOutputStream(client.getOutputStream(), 64 * 1024)) {
-                        runCamera(options, out);
+                        boolean framed = usesProtocolV2(client);
+                        runCamera(options, out, framed);
                     } catch (Exception e) {
                         if (running) Log.e(TAG, "Capture stopped: " + e);
                     } finally {
@@ -153,7 +154,52 @@ public final class CameraService extends Service {
         }
     }
 
-    private void runCamera(Options cfg, BufferedOutputStream destination) throws Exception {
+    /**
+     * Optional framed protocol negotiation. Existing OBS Media Source clients send nothing,
+     * so they continue receiving raw Annex-B from the original port.
+     * Native Windows broker sends the 8-byte "MCAMV002" preamble immediately on connect.
+     */
+    private static boolean usesProtocolV2(Socket client) throws IOException {
+        byte[] magic = {'M','C','A','M','V','0','0','2'};
+        byte[] incoming = new byte[8];
+        client.setSoTimeout(350);
+        int count = 0;
+        try {
+            while (count < 8) {
+                int n = client.getInputStream().read(incoming, count, 8 - count);
+                if (n < 0) break;
+                count += n;
+            }
+        } catch (java.net.SocketTimeoutException ignored) {
+            // Legacy OBS Media Source is receive-only. Default to raw stream.
+        } finally {
+            client.setSoTimeout(0);
+        }
+        return count == 8 && Arrays.equals(incoming, magic);
+    }
+
+    private static void put32(byte[] b, int o, long value) {
+        b[o] = (byte)(value >>> 24); b[o+1] = (byte)(value >>> 16);
+        b[o+2] = (byte)(value >>> 8); b[o+3] = (byte)value;
+    }
+    private static void put64(byte[] b, int o, long value) {
+        put32(b,o,value >>> 32); put32(b,o+4,value);
+    }
+    private static void writePacket(BufferedOutputStream out, byte[] header,
+            byte[] first, byte[] second, int flags, long ptsUs) throws IOException {
+        int a = first == null ? 0 : first.length;
+        int b = second == null ? 0 : second.length;
+        if (a + b <= 0 || a + b > 2 * 1024 * 1024)
+            throw new IOException("H264 frame too large for framed protocol");
+        put32(header,0,a+b); put32(header,4,flags); put64(header,8,ptsUs);
+        out.write(header);
+        if (a != 0) out.write(first);
+        if (b != 0) out.write(second);
+        out.flush();
+    }
+
+    private void runCamera(Options cfg, BufferedOutputStream destination, boolean framed)
+            throws Exception {
         HandlerThread cameraThread = new HandlerThread("MovilCam-Camera2");
         cameraThread.start();
         Handler cameraHandler = new Handler(cameraThread.getLooper());
@@ -167,6 +213,15 @@ public final class CameraService extends Service {
             CameraCharacteristics traits = manager.getCameraCharacteristics(cameraId);
             Size size = chooseSize(traits, cfg.width, cfg.height);
             String codecName = selectHardwareCodec(size, cfg.fps);
+
+            if (framed) {
+                byte[] stream = new byte[20];
+                stream[0]='M'; stream[1]='C'; stream[2]='V'; stream[3]='2';
+                put32(stream,4,size.getWidth()); put32(stream,8,size.getHeight());
+                put32(stream,12,cfg.fps); put32(stream,16,0);
+                destination.write(stream);
+                destination.flush();
+            }
 
             MediaFormat format = MediaFormat.createVideoFormat(
                 MediaFormat.MIMETYPE_VIDEO_AVC, size.getWidth(), size.getHeight());
@@ -196,6 +251,7 @@ public final class CameraService extends Service {
                 size.getHeight() + "@" + cfg.fps + " H264 " + codecName);
 
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+            byte[] frameHeader = new byte[16];
             byte[] parameterSets = new byte[0];
             int frames = 0;
             while (running && !Thread.currentThread().isInterrupted() && currentClient != null &&
@@ -217,12 +273,16 @@ public final class CameraService extends Service {
                             // Some encoders emit SPS/PPS in-band instead of csd-0/csd-1.
                             if (parameterSets.length == 0) parameterSets = nal;
                         } else {
-                            if ((info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0 &&
-                                    parameterSets.length > 0) {
-                                destination.write(parameterSets);
+                            boolean key = (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0;
+                            byte[] csd = key && parameterSets.length > 0 ? parameterSets : null;
+                            if (framed) {
+                                writePacket(destination, frameHeader, csd, nal,
+                                    key ? 1 : 0, info.presentationTimeUs);
+                            } else {
+                                if (csd != null) destination.write(csd);
+                                destination.write(nal);
+                                destination.flush();
                             }
-                            destination.write(nal);
-                            destination.flush();
                             frames++;
                             if (frames == 1 || frames % 300 == 0)
                                 Log.i(TAG, "H264 frames sent: " + frames);
