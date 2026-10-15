@@ -2,7 +2,7 @@
 
 Version 0.1 experimental. Proyecto Android puro (Java + Camera2 + MediaCodec) sin Iriun, scrcpy ni navegador. Pensado para Galaxy Note 10+ sin pantalla fisica, conectado por ADB.
 
-**Estado:** fuentes implementadas y pruebas unitarias preparadas. Falta compilacion Android en CI o PC, instalacion y pruebas reales en Note 10+. No se garantiza aun mejor temperatura ni calidad que Iriun.
+**Estado (15/10/2026):** GitHub Actions compilo correctamente el APK debug y aprobo las pruebas unitarias H.264. Falta instalarlo y verificar video, calidad, estabilidad y temperatura en el Note 10+ real. No se garantiza aun mejor temperatura ni calidad que Iriun.
 
 ## Caracteristicas
 
