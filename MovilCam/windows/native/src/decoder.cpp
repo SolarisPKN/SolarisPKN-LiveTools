@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstring>
 #include <cstdio>
+#include <cwchar>
 #include <limits>
 
 #pragma comment(lib,"mfplat.lib")
@@ -43,7 +44,7 @@ bool H264Decoder::configure_output() {
     return false;
 }
 
-bool H264Decoder::open(DWORD width, DWORD height, DWORD fps, bool tryD3D11) {
+bool H264Decoder::open(DWORD width, DWORD height, DWORD fps, GpuChoice choice) {
     reset();
     if (!width || !height || (width & 1) || (height & 1)) return false;
     width_ = width; height_ = height; fps_ = fps;
@@ -60,11 +61,37 @@ bool H264Decoder::open(DWORD width, DWORD height, DWORD fps, bool tryD3D11) {
                                 MFVideoInterlace_MixedInterlaceOrProgressive))) return false;
     if (FAILED(transform_->SetInputType(0, input.Get(), 0))) return false;
 
-    if (tryD3D11) {
+    if (choice != GpuChoice::Software) {
+        ComPtr<IDXGIAdapter1> selected;
+        if (choice != GpuChoice::Automatic) {
+            ComPtr<IDXGIFactory1> factory;
+            HRESULT dxgiHr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
+            if (FAILED(dxgiHr)) return false;
+            UINT wanted = choice == GpuChoice::Intel ? 0x8086 :
+                          choice == GpuChoice::Nvidia ? 0x10DE : 0x1002;
+            for (UINT i=0; ; ++i) {
+                ComPtr<IDXGIAdapter1> adapter;
+                if (factory->EnumAdapters1(i, &adapter) == DXGI_ERROR_NOT_FOUND) break;
+                DXGI_ADAPTER_DESC1 desc{};
+                if (SUCCEEDED(adapter->GetDesc1(&desc)) &&
+                    !(desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) &&
+                    desc.VendorId == wanted) {
+                    selected = adapter;
+                    std::fwprintf(stderr,L"[MovilCam] Requested GPU: %ls\n",desc.Description);
+                    break;
+                }
+            }
+            if (!selected) {
+                std::fprintf(stderr,"[MovilCam] GPU vendor not found; no silent fallback.\n");
+                return false;
+            }
+        }
         D3D_FEATURE_LEVEL level{};
         UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_VIDEO_SUPPORT;
-        HRESULT hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
-                      flags, nullptr, 0, D3D11_SDK_VERSION, &device_, &level, nullptr);
+        HRESULT hr = D3D11CreateDevice(selected.Get(),
+                      selected ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE,
+                      nullptr, flags, nullptr, 0, D3D11_SDK_VERSION,
+                      &device_, &level, nullptr);
         if (SUCCEEDED(hr)) {
             UINT token = 0;
             hr = MFCreateDXGIDeviceManager(&token, &dxgi_);
@@ -73,7 +100,14 @@ bool H264Decoder::open(DWORD width, DWORD height, DWORD fps, bool tryD3D11) {
                 MFT_MESSAGE_SET_D3D_MANAGER, reinterpret_cast<ULONG_PTR>(dxgi_.Get()));
             gpu_ = SUCCEEDED(hr);
         }
-        if (!gpu_) { dxgi_.Reset(); device_.Reset(); }
+        if (!gpu_) {
+            dxgi_.Reset(); device_.Reset();
+            if (choice != GpuChoice::Automatic) {
+                std::fprintf(stderr,"[MovilCam] Selected GPU rejected by decoder.\n");
+                return false;
+            }
+            std::fprintf(stderr,"[MovilCam] Auto GPU failed; falling back to software decoding.\n");
+        }
     }
     if (!configure_output()) {
         // Windows decoder may not offer a concrete output type until SPS/PPS arrives.

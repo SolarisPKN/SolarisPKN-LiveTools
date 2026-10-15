@@ -9,6 +9,7 @@
 #include <mfidl.h>
 #include <mfapi.h>
 namespace movilcam {
+enum class GpuChoice { Automatic, Intel, Nvidia, Amd, Software };
 class H264Decoder {
     Microsoft::WRL::ComPtr<IMFTransform> transform_;
     Microsoft::WRL::ComPtr<ID3D11Device> device_;
@@ -23,7 +24,7 @@ public:
     H264Decoder() = default;
     H264Decoder(const H264Decoder&) = delete;
     H264Decoder& operator=(const H264Decoder&) = delete;
-    bool open(DWORD width, DWORD height, DWORD fps, bool tryD3D11);
+    bool open(DWORD width, DWORD height, DWORD fps, GpuChoice gpu);
     bool decode(const std::uint8_t* data, std::size_t bytes, LONGLONG pts100ns,
                 FrameRing& ring);
     void reset();

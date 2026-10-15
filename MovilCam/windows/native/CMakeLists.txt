@@ -19,7 +19,7 @@ add_executable(MovilCamBridge src/main.cpp src/ring.cpp src/decoder.cpp src/cont
 target_compile_features(MovilCamBridge PRIVATE cxx_std_17)
 target_compile_definitions(MovilCamBridge PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX _WIN32_WINNT=0x0A00)
 target_link_libraries(MovilCamBridge PRIVATE movilcam_protocol
-  ws2_32 ole32 mfplat mf mfuuid d3d11 wmcodecdspuuid)
+  ws2_32 ole32 mfplat mf mfuuid d3d11 dxgi wmcodecdspuuid)
 if(MSVC)
   target_compile_options(MovilCamBridge PRIVATE /W4 /EHsc /permissive-)
   target_compile_options(movilcam-protocol-test PRIVATE /W4 /EHsc /permissive-)

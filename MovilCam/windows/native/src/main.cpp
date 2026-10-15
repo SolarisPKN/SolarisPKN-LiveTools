@@ -60,7 +60,7 @@ bool send_all(SOCKET socket, const std::uint8_t* data, std::size_t bytes) {
     }
     return bytes == 0;
 }
-bool once(bool d3d, const movilcam::ControlServer& users, movilcam::FrameRing& ring) {
+bool once(movilcam::GpuChoice gpu, const movilcam::ControlServer& users, movilcam::FrameRing& ring) {
     Socket sock(socket(AF_INET,SOCK_STREAM,IPPROTO_TCP));
     if(sock.handle==INVALID_SOCKET) return false;
     DWORD timeout=3000;
@@ -95,12 +95,12 @@ bool once(bool d3d, const movilcam::ControlServer& users, movilcam::FrameRing& r
         return false;
     }
     movilcam::H264Decoder decoder;
-    if(!decoder.open(h.width,h.height,h.fps,d3d)) {
+    if(!decoder.open(h.width,h.height,h.fps,gpu)) {
         std::fprintf(stderr,"[MovilCam] Media Foundation H264 decoder unavailable.\n");
         return false;
     }
     std::printf("[MovilCam] %ux%u @ %u FPS, D3D11 requested=%s, active=%s\n",
-                h.width,h.height,h.fps,d3d?"yes":"no",
+                h.width,h.height,h.fps,gpu!=movilcam::GpuChoice::Software?"yes":"no",
                 decoder.gpu_enabled()?"yes":"no");
     std::printf("[MovilCam] NV12 triple-buffer: Local\\SolarisPKN_MovilCam_NV12_v1.\n");
     std::vector<std::uint8_t> payload;
@@ -137,11 +137,20 @@ bool once(bool d3d, const movilcam::ControlServer& users, movilcam::FrameRing& r
 } // namespace
 
 int main(int argc,char** argv) {
-    bool hardware=true;
+    movilcam::GpuChoice gpu=movilcam::GpuChoice::Automatic;
     for(int i=1;i<argc;++i) {
-        if(std::string(argv[i])=="--software") hardware=false;
+        if(std::string(argv[i])=="--software") gpu=movilcam::GpuChoice::Software;
+        else if(std::string(argv[i])=="--gpu" && i+1<argc) {
+            const std::string choice(argv[++i]);
+            if(choice=="auto") gpu=movilcam::GpuChoice::Automatic;
+            else if(choice=="intel") gpu=movilcam::GpuChoice::Intel;
+            else if(choice=="nvidia") gpu=movilcam::GpuChoice::Nvidia;
+            else if(choice=="amd") gpu=movilcam::GpuChoice::Amd;
+            else if(choice=="software") gpu=movilcam::GpuChoice::Software;
+            else {std::fprintf(stderr,"Unknown GPU: %s\n",choice.c_str());return 2;}
+        }
         else if(std::string(argv[i])=="--help") {
-            std::puts("MovilCamBridge [--software]\n"
+            std::puts("MovilCamBridge [--gpu auto|intel|nvidia|amd|software] [--software]\n"
                 "Requires adb forward tcp:27183 tcp:27183 and MovilCam Android running.\n"
                 "Connects once; decodes H264 to NV12; publishes triple-buffer for future DShow driver.");
             return 0;
@@ -160,7 +169,7 @@ int main(int argc,char** argv) {
     std::puts("[MovilCam] Standby: camera OFF until an app opens MovilCam.");
     while(run) {
         if(users.clients()==0){ ring.close();Sleep(150);continue; }
-        if(!once(hardware,users,ring) && run) {
+        if(!once(gpu,users,ring) && run) {
             std::fprintf(stderr,"[MovilCam] Waiting for ADB camera...\n");
         }
         for(int x=0;x<10&&run&&users.clients()>0;++x) Sleep(100);

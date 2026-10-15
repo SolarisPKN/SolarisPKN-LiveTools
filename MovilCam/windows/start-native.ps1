@@ -4,6 +4,7 @@ param(
   [ValidateRange(5,60)][int]$Fps=30,
   [ValidateRange(1,24)][int]$BitrateMbps=8,
   [string]$Serial='',
+  [ValidateSet('auto','intel','nvidia','amd','software')][string]$Gpu='auto',
   [string]$BridgeExe='',
   [switch]$SoftwareDecode
 )
@@ -16,4 +17,6 @@ if (-not (Test-Path -LiteralPath $BridgeExe)) {
   throw 'Falta MovilCamBridge.exe. Compila o descargalo del workflow Windows native.'
 }
 Write-Host 'Broker iniciado. La camara permanece apagada hasta que una app use la fuente DirectShow.'
-if ($SoftwareDecode) { & $BridgeExe --software } else { & $BridgeExe }
+if ($SoftwareDecode) { $Gpu = 'software' }
+Write-Host "Decodificador elegido: $Gpu"
+& $BridgeExe --gpu $Gpu
