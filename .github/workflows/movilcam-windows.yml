@@ -1,0 +1,60 @@
+name: MovilCam Windows native
+
+on:
+  push:
+    paths:
+      - 'MovilCam/windows/native/**'
+      - '.github/workflows/movilcam-windows.yml'
+  pull_request:
+    paths:
+      - 'MovilCam/windows/native/**'
+      - '.github/workflows/movilcam-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout Microsoft DirectShow SDK baseclasses
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/Windows-classic-samples
+          path: external/windows-classic-samples
+          sparse-checkout: Samples/Win7Samples/multimedia/directshow/baseclasses
+          sparse-checkout-cone-mode: false
+      - name: Configure 64-bit CMake
+        shell: pwsh
+        run: cmake -S MovilCam/windows/native -B build/movilcam-windows -G "Visual Studio 17 2022" -A x64 "-DMOVILCAM_DSHOW_BASE=${{ github.workspace }}/external/windows-classic-samples/Samples/Win7Samples/multimedia/directshow/baseclasses"
+      - name: Build Release
+        shell: pwsh
+        run: cmake --build build/movilcam-windows --config Release --parallel
+      - name: Run native unit tests
+        shell: pwsh
+        run: ctest --test-dir build/movilcam-windows -C Release --output-on-failure
+      - name: Validate DirectShow camera registration on CI runner
+        shell: pwsh
+        run: |
+          $dll = (Resolve-Path 'build/movilcam-windows/Release/MovilCamVirtualCamera.dll').Path
+          $regsvr = "$env:windir\System32\regsvr32.exe"
+          $registered = Start-Process -FilePath $regsvr -ArgumentList @('/s', "`"$dll`"") -Wait -PassThru
+          if ($registered.ExitCode -ne 0) { throw "DirectShow registration failed: $($registered.ExitCode)" }
+          try {
+            & 'build/movilcam-windows/Release/movilcam-device-test.exe'
+            if ($LASTEXITCODE -ne 0) { throw "DirectShow device smoke test failed: $LASTEXITCODE" }
+          } finally {
+            $removed = Start-Process -FilePath $regsvr -ArgumentList @('/s','/u',"`"$dll`"") -Wait -PassThru
+            if ($removed.ExitCode -ne 0) { Write-Warning "Could not unregister temporary camera: $($removed.ExitCode)" }
+          }
+      - name: Upload Windows bridge EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: MovilCamBridge-win-x64
+          path: |
+            build/movilcam-windows/Release/MovilCamBridge.exe
+            build/movilcam-windows/Release/MovilCamVirtualCamera.dll
+          retention-days: 14
