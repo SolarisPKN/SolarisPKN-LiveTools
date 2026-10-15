@@ -52,9 +52,32 @@ static int test() {
                                              reinterpret_cast<void**>(&cfg)))) {
                                 int count=0,size=0;
                                 hr=cfg->GetNumberOfCapabilities(&count,&size);
-                                if(SUCCEEDED(hr)&&count>=2 && size==sizeof(VIDEO_STREAM_CONFIG_CAPS)){
-                                    std::printf("MovilCam camera enumerated, instantiated, 2+ formats\n");
-                                    result=0;
+                                if(SUCCEEDED(hr) && count>=2 && size==sizeof(VIDEO_STREAM_CONFIG_CAPS)){
+                                    AM_MEDIA_TYPE* media=nullptr;
+                                    VIDEO_STREAM_CONFIG_CAPS caps{};
+                                    hr=cfg->GetStreamCaps(0,&media,reinterpret_cast<BYTE*>(&caps));
+                                    if(SUCCEEDED(hr) && media && media->cbFormat>=sizeof(VIDEOINFOHEADER) &&
+                                        media->pbFormat) {
+                                        auto* vih=reinterpret_cast<const VIDEOINFOHEADER*>(media->pbFormat);
+                                        if(vih->bmiHeader.biWidth==1920 && vih->bmiHeader.biHeight==1080 &&
+                                            vih->AvgTimePerFrame>=166666 && vih->AvgTimePerFrame<=166668 &&
+                                            caps.MinFrameInterval==vih->AvgTimePerFrame &&
+                                            caps.MaxFrameInterval==vih->AvgTimePerFrame) {
+                                            std::printf("MovilCam enumerated: 1920x1080 60 FPS NV12\n");
+                                            result=0;
+                                        } else {
+                                            std::fprintf(stderr,"ERROR: Virtual camera does not advertise 1080p60\n");
+                                            result=9;
+                                        }
+                                    } else {
+                                        std::fprintf(stderr,"ERROR: Camera GetStreamCaps failed\n");
+                                        result=10;
+                                    }
+                                    if(media) {
+                                        if(media->pbFormat) CoTaskMemFree(media->pbFormat);
+                                        if(media->pUnk) media->pUnk->Release();
+                                        CoTaskMemFree(media);
+                                    }
                                 }else{
                                     std::fprintf(stderr,"IAMStreamConfig enumeration failed\n");
                                     result=8;
