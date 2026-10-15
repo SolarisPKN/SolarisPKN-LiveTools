@@ -19,6 +19,7 @@
 #include "protocol.hpp"
 #include "decoder.hpp"
 #include "ring.hpp"
+#include "control.hpp"
 
 #pragma comment(lib,"ws2_32.lib")
 #pragma comment(lib,"mfplat.lib")
@@ -59,7 +60,7 @@ bool send_all(SOCKET socket, const std::uint8_t* data, std::size_t bytes) {
     }
     return bytes == 0;
 }
-bool once(bool d3d) {
+bool once(bool d3d, const movilcam::ControlServer& users, movilcam::FrameRing& ring) {
     Socket sock(socket(AF_INET,SOCK_STREAM,IPPROTO_TCP));
     if(sock.handle==INVALID_SOCKET) return false;
     DWORD timeout=3000;
@@ -84,9 +85,13 @@ bool once(bool d3d) {
         std::fprintf(stderr,"[MovilCam] Android app old version or protocol mismatch.\n");
         return false;
     }
-    movilcam::FrameRing ring;
-    if(!ring.create(h.width,h.height)) {
-        std::fprintf(stderr,"[MovilCam] NV12 ring already exists or memory failure. One broker only.\n");
+    if(!ring.header()) {
+        if(!ring.create(h.width,h.height)) {
+            std::fprintf(stderr,"[MovilCam] NV12 ring exists or memory failure. One broker only.\n");
+            return false;
+        }
+    } else if(ring.header()->width != h.width || ring.header()->height != h.height) {
+        std::fprintf(stderr,"[MovilCam] Resolution changed: restart broker to renegotiate.\n");
         return false;
     }
     movilcam::H264Decoder decoder;
@@ -100,7 +105,7 @@ bool once(bool d3d) {
     std::printf("[MovilCam] NV12 triple-buffer: Local\\SolarisPKN_MovilCam_NV12_v1.\n");
     std::vector<std::uint8_t> payload;
     std::uint64_t packets=0, failures=0;
-    while(run) {
+    while(run && users.clients()>0) {
         std::uint8_t raw[movilcam::packet_header_bytes];
         if(!recv_all(sock.handle,raw,sizeof(raw))) break;
         movilcam::PacketHeader p{};
@@ -149,12 +154,18 @@ int main(int argc,char** argv) {
     if(FAILED(com)){ WSACleanup();return 2; }
     HRESULT mf=MFStartup(MF_VERSION,MFSTARTUP_FULL);
     if(FAILED(mf)){CoUninitialize();WSACleanup();return 3;}
+    movilcam::ControlServer users;
+    movilcam::FrameRing ring;
+    users.start();
+    std::puts("[MovilCam] Standby: camera OFF until an app opens MovilCam.");
     while(run) {
-        if(!once(hardware) && run) {
+        if(users.clients()==0){ ring.close();Sleep(150);continue; }
+        if(!once(hardware,users,ring) && run) {
             std::fprintf(stderr,"[MovilCam] Waiting for ADB camera...\n");
         }
-        for(int x=0;x<10&&run;++x) Sleep(100);
+        for(int x=0;x<10&&run&&users.clients()>0;++x) Sleep(100);
     }
+    users.stop();
     MFShutdown(); CoUninitialize(); WSACleanup();
     return 0;
 }

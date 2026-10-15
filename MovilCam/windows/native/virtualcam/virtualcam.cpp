@@ -11,6 +11,7 @@
 #include <cstring>
 #include <vector>
 #include "ring.hpp"
+#include "control.hpp"
 
 DEFINE_GUID(CLSID_SolarisPKNMovilCam,0x4b34118d,0x1f57,0x41ef,0xa8,0x22,0x27,0x6b,0x9c,0x11,0xca,0x01);
 DEFINE_GUID(MOVILCAM_NV12,0x3231564e,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
@@ -54,6 +55,13 @@ public:
     DWORD width() const {return width_;}
     DWORD height() const {return height_;}
     LONGLONG latest() const {return hdr_ ? hdr_->published : 0;}
+    bool isFresh() const {
+        if(!hdr_ || hdr_->lastQpc==0) return false;
+        LARGE_INTEGER now{},frequency{};
+        QueryPerformanceCounter(&now); QueryPerformanceFrequency(&frequency);
+        return now.QuadPart >= hdr_->lastQpc &&
+               now.QuadPart-hdr_->lastQpc < frequency.QuadPart*2;
+    }
     bool copy_latest(std::uint8_t* dst, size_t capacity, LONGLONG& seq) {
         if(!hdr_ || capacity < hdr_->frameBytes) return false;
         for(int i=0;i<3;++i){
@@ -101,6 +109,12 @@ static void nv12_to_yuy2(const std::uint8_t* src,std::uint8_t* dst,
 
 class CameraPin final : public CSourceStream, public IAMStreamConfig, public IKsPropertySet {
     SharedReader reader_;
+    HANDLE demandPipe_=INVALID_HANDLE_VALUE;
+    void registerConsumer() {
+        if(demandPipe_==INVALID_HANDLE_VALUE)
+            demandPipe_=CreateFileW(movilcam::control_pipe,GENERIC_WRITE,0,
+                                    nullptr,OPEN_EXISTING,0,nullptr);
+    }
     DWORD width_=1920,height_=1080,fps_=30;
     REFERENCE_TIME frameTime_=333333;
     REFERENCE_TIME sampleTime_=0;
@@ -179,11 +193,14 @@ public:
         return actual.cbBuffer>=LONG(frameBytes)?S_OK:E_FAIL;
     }
     HRESULT OnThreadCreate() override {
+        registerConsumer();
         sampleTime_=0;lastSeen_=0;
         scratch_.resize(size_t(width_)*height_*3/2);
         return S_OK;
     }
     HRESULT OnThreadDestroy() override {
+        if(demandPipe_!=INVALID_HANDLE_VALUE){CloseHandle(demandPipe_);demandPipe_=INVALID_HANDLE_VALUE;}
+        reader_.close();
         scratch_.clear();return S_OK;
     }
     HRESULT FillBuffer(IMediaSample* sample) override {
@@ -193,6 +210,9 @@ public:
         const size_t nv12size=size_t(width_)*height_*3/2;
         const size_t outsize=useYUY2_?size_t(width_)*height_*2:nv12size;
         if(sample->GetSize()<LONG(outsize)) return E_FAIL;
+        // Reconnect control pipe if broker starts after the application.
+        if(demandPipe_==INVALID_HANDLE_VALUE && (++reopenCounter_%25)==0)
+            registerConsumer();
         // Wait for a fresh frame, but never stall forever if USB drops.
         if(!reader_.open()) {
             if((++reopenCounter_%40)==0) reader_.close();
@@ -204,7 +224,7 @@ public:
         }
         LONGLONG copied=0;
         bool got=false;
-        if(reader_.width()==width_ && reader_.height()==height_) {
+        if(reader_.isFresh() && reader_.width()==width_ && reader_.height()==height_) {
             if(useYUY2_) {
                 got=reader_.copy_latest(scratch_.data(),scratch_.size(),copied);
                 if(got) nv12_to_yuy2(scratch_.data(),dst,width_,height_);
