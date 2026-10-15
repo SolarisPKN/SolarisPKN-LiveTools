@@ -14,8 +14,8 @@ $folder = Join-Path $env:ProgramFiles 'SolarisPKN\MovilCam'
 New-Item -ItemType Directory -Force -Path $folder | Out-Null
 $dest = Join-Path $folder 'MovilCamVirtualCamera.dll'
 Copy-Item -LiteralPath $Dll -Destination $dest -Force
-& "$env:windir\System32\regsvr32.exe" /s $dest
-if ($LASTEXITCODE -ne 0) { throw "regsvr32 fallo con codigo $LASTEXITCODE" }
+$registered = Start-Process -FilePath "$env:windir\System32\regsvr32.exe" -ArgumentList @('/s', "`"$dest`"") -Wait -PassThru
+if ($registered.ExitCode -ne 0) { throw "regsvr32 fallo con codigo $($registered.ExitCode)" }
 Write-Host 'SolarisPKN MovilCam (DirectShow) registrada.'
 Write-Host 'Ejecuta el broker antes de abrir OBS, Discord u otras apps.'
 Write-Host 'La DLL registrada DEBE mantenerse en la ruta instalada.'

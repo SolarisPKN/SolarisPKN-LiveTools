@@ -41,14 +41,14 @@ jobs:
         run: |
           $dll = (Resolve-Path 'build/movilcam-windows/Release/MovilCamVirtualCamera.dll').Path
           $regsvr = "$env:windir\System32\regsvr32.exe"
-          & $regsvr /s $dll
-          if ($LASTEXITCODE -ne 0) { throw "DirectShow registration failed: $LASTEXITCODE" }
+          $registered = Start-Process -FilePath $regsvr -ArgumentList @('/s', "`"$dll`"") -Wait -PassThru
+          if ($registered.ExitCode -ne 0) { throw "DirectShow registration failed: $($registered.ExitCode)" }
           try {
             & 'build/movilcam-windows/Release/movilcam-device-test.exe'
             if ($LASTEXITCODE -ne 0) { throw "DirectShow device smoke test failed: $LASTEXITCODE" }
           } finally {
-            & $regsvr /s /u $dll
-            if ($LASTEXITCODE -ne 0) { Write-Warning "Could not unregister temporary camera" }
+            $removed = Start-Process -FilePath $regsvr -ArgumentList @('/s','/u',"`"$dll`"") -Wait -PassThru
+            if ($removed.ExitCode -ne 0) { Write-Warning "Could not unregister temporary camera: $($removed.ExitCode)" }
           }
       - name: Upload Windows bridge EXE
         uses: actions/upload-artifact@v4
