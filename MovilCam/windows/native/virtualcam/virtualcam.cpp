@@ -113,6 +113,13 @@ public:
         CSourceStream(NAME("SolarisPKN MovilCam output"),hr,parent,L"Capture"){
         if(reader_.open()){width_=reader_.width();height_=reader_.height();}
     }
+    // IAMStreamConfig and IKsPropertySet both derive IUnknown. Delegate their
+    // COM lifetime to the one controlling CSourceStream/CUnknown instance.
+    STDMETHODIMP QueryInterface(REFIID riid,void** ppv) override {
+        return CSourceStream::QueryInterface(riid,ppv);
+    }
+    STDMETHODIMP_(ULONG) AddRef() override { return CSourceStream::AddRef(); }
+    STDMETHODIMP_(ULONG) Release() override { return CSourceStream::Release(); }
     STDMETHODIMP NonDelegatingQueryInterface(REFIID riid,void** ppv) override {
         if(riid==IID_IAMStreamConfig) return GetInterface(static_cast<IAMStreamConfig*>(this),ppv);
         if(riid==IID_IKsPropertySet) return GetInterface(static_cast<IKsPropertySet*>(this),ppv);
