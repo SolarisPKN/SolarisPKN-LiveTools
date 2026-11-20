@@ -4,7 +4,7 @@
 
 SolarisPKN AntiCensor is a **GPLv3-licensed Windows desktop application** that uses a *physical microphone only as a loudness reference*. Instead of forwarding speech, it synthesizes a Lelele/robot/beep/noise sound whose amplitude follows the calibrated microphone level. It is part of [SolarisPKN-LiveTools](https://github.com/SolarisPKN/SolarisPKN-LiveTools).
 
-**Current state: v0.7.0 preview.** The code, bilingual UI, tray and installer have automated tests. A full interactive end-to-end VB-CABLE → Roblox test is still pending.
+**Current state: v0.7.1 preview.** The code, bilingual UI, tray and installer have automated tests. A full interactive end-to-end VB-CABLE → Roblox test is still pending.
 
 [Español](README.es.md) | [Installation (EN)](README_INSTALADOR.md) | [Instalación (ES)](README_INSTALADOR.es.md)
 
@@ -40,16 +40,16 @@ VB-CABLE Basic by **VB-Audio Software / Vincent Burel** is a **proprietary donat
 - Official download: https://vb-audio.com/Cable/
 - License/distribution conditions: https://vb-audio.com/Services/licensing.htm
 - For commercial/professional distribution, confirm and obtain the licenses required by VB-Audio.
-- Windows/Roblox initially names the recording endpoint **CABLE Output**. **SolarisPKN-Mic Lelele** is AntiCensor's product identity; do not repackage or rename vendor-signed binaries.
+- AntiCensor automatically sets the recording endpoint's **Windows display name** to **SolarisPKN-Mic Lelele** during setup or at the next Windows login after the VB-Audio driver becomes available. The signed driver remains unchanged. This needs validation on a machine with VB-CABLE installed.
 - Uninstalling AntiCensor **does not automatically remove VB-CABLE**, as other apps may need it.
 
 ## Quick start (Windows 10/11 x64)
 
-1. Run `SolarisPKN-AntiCensor-Setup-v0.7.0.exe` from a verified build or Release.
+1. Run `SolarisPKN-AntiCensor-Setup-v0.7.1.exe` from a verified build or Release.
 2. If prompted, enable the VB-CABLE dependency, let the manufacturer's installer complete, and **restart Windows**.
 3. Open AntiCensor from the notification-area icon and select your real reference microphone.
 4. Choose **Language / Idioma**, calibrate whisper and normal speech, then press **Enable Microphone**.
-5. In Roblox/Discord, choose **CABLE Output (VB-Audio Virtual Cable)** as the input device.
+5. In Roblox/Discord, choose **SolarisPKN-Mic Lelele** as the input device once Windows applies the name. If the rename is blocked, the original **CABLE Output** remains the fallback. Restart the game to refresh its device list.
 
 Source-only build: `powershell -NoProfile -ExecutionPolicy Bypass -File .\INSTALAR.ps1`, then `powershell -NoProfile -ExecutionPolicy Bypass -File .\packaging\BUILD_EXE.ps1`. Build tools: Python 3.12 x64, PyInstaller and Inno Setup 6. The vendor archive is excluded from Git; `packaging\FETCH_VBCABLE.ps1` fetches the official unchanged ZIP and checks its pinned SHA-256.
 

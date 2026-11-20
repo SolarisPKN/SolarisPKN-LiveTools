@@ -29,6 +29,23 @@ class VBCableTests(unittest.TestCase):
         self.assertEqual(find_cable_pair(self.devices, self.apis),
                          (4, "CABLE Output (VB-Audio Virtual Cable)"))
 
+    def test_renamed_microphone_is_still_detected_after_install(self):
+        renamed = [dict(item) for item in self.devices]
+        renamed[3]["name"] = "SolarisPKN-Mic Lelele"
+        renamed[5]["name"] = "SolarisPKN-Mic Lelele"
+        self.assertEqual(find_cable_pair(renamed, self.apis), (4, "SolarisPKN-Mic Lelele"))
+        self.assertTrue(is_vbcable_capture_device("SolarisPKN-Mic Lelele"))
+
+    def test_never_use_unrelated_output_or_microphone(self):
+        unrelated = [dict(item) for item in self.devices[:2]]
+        unrelated.extend([
+            {"name": "CABLE Input (Other vendor)", "hostapi": 1,
+             "max_input_channels": 0, "max_output_channels": 2},
+            {"name": "SolarisPKN-Mic Lelele", "hostapi": 1,
+             "max_input_channels": 1, "max_output_channels": 0},
+        ])
+        self.assertIsNone(find_cable_pair(unrelated, self.apis))
+
     def test_no_cable_means_no_output(self):
         self.assertIsNone(find_cable_pair(self.devices[:2], self.apis))
 

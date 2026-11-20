@@ -35,13 +35,14 @@ def find_cable_pair(device_list=None, api_list=None):
         name = str(d["name"])
         api = str(apis[d["hostapi"]]["name"])
         lower = name.casefold()
-        vendor = "vb-audio" in lower or "vb audio" in lower or "cable input" in lower or "cable output" in lower
-        if not vendor:
-            continue
-        # El nombre histórico es contraintuitivo: Input es dispositivo render.
-        if "cable input" in lower and int(d["max_output_channels"]) >= 1:
+        # Windows lets users rename the capture endpoint. AntiCensor automatically
+        # renames "CABLE Output" to "SolarisPKN-Mic Lelele" after installation.
+        # Never route sound to a physical speaker because of a generic "Cable" name.
+        playback = "cable input" in lower and "vb-audio" in lower
+        capture = is_vbcable_capture_device(name)
+        if playback and int(d["max_output_channels"]) >= 1:
             outputs.append((i, name, api))
-        elif "cable output" in lower and int(d["max_input_channels"]) >= 1:
+        elif capture and int(d["max_input_channels"]) >= 1:
             inputs.append((i, name, api))
     matches = []
     for index, name, api in outputs:
@@ -57,7 +58,9 @@ def find_cable_pair(device_list=None, api_list=None):
 
 def is_vbcable_capture_device(name: str) -> bool:
     lower = name.casefold()
-    return "cable output" in lower or "vb-audio virtual cable" in lower
+    return ("cable output" in lower and "vb-audio" in lower) or (
+        lower.startswith("solarispkn-mic lelele")
+    )
 
 
 def pcm_to_float32(raw: bytes, frames: int = 480) -> np.ndarray:

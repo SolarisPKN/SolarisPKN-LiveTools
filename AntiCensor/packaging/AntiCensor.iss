@@ -1,6 +1,6 @@
 ; SolarisPKN AntiCensor GPLv3 installer. No unsigned kernel driver!
 #define ProjectRoot AddBackslash(SourcePath) + ".."
-#define Version "0.7.0"
+#define Version "0.7.1"
 [Setup]
 AppId={{8FE390B9-D2BC-43F7-91E6-23AFBE4A0B32}
 AppName=SolarisPKN AntiCensor
@@ -22,7 +22,7 @@ SolidCompression=yes
 CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
-VersionInfoVersion=0.7.0.0
+VersionInfoVersion=0.7.1.0
 VersionInfoCompany=SolarisPKN
 VersionInfoDescription=SolarisPKN AntiCensor GPLv3 Installer
 
@@ -62,6 +62,8 @@ Source: "{#ProjectRoot}\vbcable_backend.py"; DestDir: "{app}\source"; Flags: ign
 Source: "{#ProjectRoot}\packaging\third_party\VBCABLE_Driver_Pack46.zip"; DestDir: "{app}\third_party"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\third_party\VBCABLE-NOTICE.txt"; DestDir: "{app}\third_party"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\Instalar-VBCable.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
+Source: "{#ProjectRoot}\packaging\Renombrar-Mic.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
+Source: "{#ProjectRoot}\packaging\Renombrar-Mic.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\Instalar-VBCable.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 Source: "{#ProjectRoot}\updater.py"; DestDir: "{app}\source"; Flags: ignoreversion
 Source: "{#ProjectRoot}\tray_app.py"; DestDir: "{app}\source"; Flags: ignoreversion
@@ -72,6 +74,7 @@ Source: "{#ProjectRoot}\tests\test_i18n.py"; DestDir: "{app}\source\tests"; Flag
 Source: "{#ProjectRoot}\tests\test_pcm_synth.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\tests\test_updater.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\tests\test_vbcable_backend.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
+Source: "{#ProjectRoot}\tests\test_endpoint_rename.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\AntiCensor.iss"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\BUILD_EXE.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\FETCH_VBCABLE.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
@@ -90,4 +93,5 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\scripts\Instalar-VBCable.ps1"" -Language ""{language}"""; Tasks: vbcable; Flags: waituntilterminated skipifsilent
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\scripts\Renombrar-Mic.ps1"""; Flags: waituntilterminated
 Filename: "{app}\SolarisPKN-AntiCensor.exe"; Description: "{cm:RunApplication}"; Flags: nowait postinstall skipifsilent

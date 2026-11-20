@@ -91,7 +91,7 @@ class SolarisMic:
         self.language = get_language()
         self._localized_widgets = []
         self.on_language_changed = None
-        root.title(self.T("app_title", version="0.7.0"))
+        root.title(self.T("app_title", version="0.7.1"))
         root.geometry("770x675")
         root.minsize(680, 570)
 

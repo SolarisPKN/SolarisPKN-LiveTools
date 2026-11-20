@@ -10,6 +10,7 @@ from __future__ import annotations
 import ctypes
 import os
 import queue
+import subprocess
 import sys
 import threading
 import tkinter as tk
@@ -20,6 +21,7 @@ from PIL import Image, ImageDraw
 import pystray
 
 from mic import SolarisMic
+from vbcable_backend import find_cable_pair
 from updater import UpdateChecker, UpdateResult
 from version import APP_NAME, APP_VERSION
 
@@ -47,6 +49,8 @@ class TrayAntiCensor:
         self.updater = UpdateChecker()
         self.latest: UpdateResult | None = None
         self.closed = False
+        self.rename_complete = False
+        self.rename_running = False
         self.icon = pystray.Icon(
             "SolarisPKN-AntiCensor",
             tray_icon_image(),
@@ -168,6 +172,8 @@ class TrayAntiCensor:
                     self.open_release()
                 elif cmd == "update_result":
                     self.handle_update(*data)
+                elif cmd == "rename_result":
+                    self.handle_rename(data)
                 elif cmd == "exit":
                     self.quit()
                     return
@@ -175,6 +181,73 @@ class TrayAntiCensor:
             pass
         if not self.closed:
             self.window.after(200, self.poll)
+
+    @staticmethod
+    def mic_rename_script():
+        """Find the GPLv3 helper in either installed Setup or source checkout."""
+        base = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(__file__)
+        for path in (
+            os.path.join(base, "scripts", "Renombrar-Mic.ps1"),
+            os.path.join(base, "packaging", "Renombrar-Mic.ps1"),
+        ):
+            if os.path.isfile(path):
+                return path
+        return None
+
+    def start_rename(self):
+        """Rename only the VB-CABLE recording endpoint; never modify driver files."""
+        if self.closed or self.rename_complete or self.rename_running:
+            return
+        script = self.mic_rename_script()
+        if script is None:
+            return
+        try:
+            pair = find_cable_pair()
+        except Exception:
+            return
+        if pair is None:
+            return  # VB-CABLE is not installed or not enumerated after reboot yet
+        self.rename_running = True
+
+        def background():
+            try:
+                result = subprocess.run(
+                    [
+                        os.path.join(os.environ.get("SystemRoot", r"C:\Windows"),
+                                     "System32", "WindowsPowerShell", "v1.0", "powershell.exe"),
+                        "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                        "-File", script,
+                    ],
+                    capture_output=True, encoding="utf-8", errors="replace",
+                    timeout=25, check=False,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+                output = result.stdout.strip()
+                code = output.rsplit("ANTICENSOR_ENDPOINT_NAME=", 1)[-1].splitlines()[0] if (
+                    "ANTICENSOR_ENDPOINT_NAME=" in output
+                ) else "ERROR"
+                if result.returncode != 0:
+                    code = "ERROR"
+                self.queue.put(("rename_result", code))
+            except (OSError, subprocess.SubprocessError):
+                self.queue.put(("rename_result", "ERROR"))
+
+        threading.Thread(target=background, daemon=True).start()
+
+    def handle_rename(self, status: str):
+        self.rename_running = False
+        if status in ("RENAMED", "ALREADY"):
+            self.rename_complete = True
+            if status == "RENAMED" and not self.app.active and not self.app.calibrating:
+                self.app.refresh()
+
+    def periodic_rename(self):
+        if self.closed:
+            return
+        self.start_rename()
+        # A first login may precede driver enumeration. Retry without UAC;
+        # do not change any microphone other than VB-CABLE Basic capture.
+        self.window.after(60_000, self.periodic_rename)
 
     def periodic_check(self):
         if self.closed:
@@ -199,6 +272,7 @@ class TrayAntiCensor:
     def run(self):
         self.window.after(100, self.poll)
         self.window.after(2000, self.periodic_check)
+        self.window.after(3500, self.periodic_rename)
         # pystray Windows backend puede usar su propio message loop en un hilo.
         threading.Thread(target=self.icon.run, daemon=True).start()
         self.window.mainloop()

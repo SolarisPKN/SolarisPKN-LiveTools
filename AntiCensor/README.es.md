@@ -4,7 +4,7 @@
 
 SolarisPKN AntiCensor es una **aplicación de Windows bajo GPLv3** que usa el *micrófono físico solamente para medir la intensidad de la voz*. En vez de reenviar tus palabras, genera sonidos sintéticos (Lelele, Robot, Pitidos y Ruido) cuyo volumen sigue tu nivel calibrado. Forma parte de [SolarisPKN-LiveTools](https://github.com/SolarisPKN/SolarisPKN-LiveTools).
 
-**Estado actual: vista previa v0.7.0.** El código, la interfaz bilingüe, el menú de bandeja y el instalador cuentan con pruebas automáticas. Todavía faltan las pruebas completas de audio real VB-CABLE → Roblox.
+**Estado actual: vista previa v0.7.1.** El código, la interfaz bilingüe, el menú de bandeja y el instalador cuentan con pruebas automáticas. Todavía faltan las pruebas completas de audio real VB-CABLE → Roblox.
 
 [English](README.md) | [Instalación (ES)](README_INSTALADOR.es.md) | [Installation (EN)](README_INSTALADOR.md)
 
@@ -40,16 +40,16 @@ VB-CABLE básico de **VB-Audio Software / Vincent Burel** es un componente **pro
 - Descarga oficial: https://vb-audio.com/Cable/
 - Condiciones de licencia y redistribución: https://vb-audio.com/Services/licensing.htm
 - Para uso profesional o distribución comercial, cumplir las licencias requeridas por VB-Audio.
-- En Windows y Roblox el dispositivo de grabación figura inicialmente como **CABLE Output**. **SolarisPKN-Mic Lelele** es la identidad de nuestro programa; no modificamos los binarios firmados del fabricante.
+- AntiCensor intenta poner **automáticamente el nombre visible SolarisPKN-Mic Lelele** al instalarse o en el siguiente inicio de Windows, cuando aparezca el dispositivo de VB-Audio. No altera el controlador firmado. Falta comprobar el resultado en una máquina con VB-CABLE instalado.
 - Desinstalar AntiCensor **no desinstala automáticamente VB-CABLE**, porque podrían usarlo otros programas.
 
 ## Instalación rápida (Windows 10/11 x64)
 
-1. Ejecutá `SolarisPKN-AntiCensor-Setup-v0.7.0.exe` desde una compilación o Release verificada.
+1. Ejecutá `SolarisPKN-AntiCensor-Setup-v0.7.1.exe` desde una compilación o Release verificada.
 2. Cuando se ofrezca, instalá la dependencia VB-CABLE mediante el asistente del fabricante y **reiniciá Windows**.
 3. Abrí AntiCensor desde el icono junto al reloj y seleccioná el micrófono físico de referencia.
 4. Elegí **Idioma / Language**, calibrá susurro y voz normal, y pulsá **Activar micrófono**.
-5. En Roblox o Discord seleccioná **CABLE Output (VB-Audio Virtual Cable)** como entrada de audio.
+5. En Roblox o Discord seleccioná **SolarisPKN-Mic Lelele** cuando Windows aplique el nombre. Si Windows bloquea el cambio, se conserva **CABLE Output** como respaldo. Reiniciá el juego para actualizar dispositivos.
 
 Para compilar desde el código: `powershell -NoProfile -ExecutionPolicy Bypass -File .\INSTALAR.ps1`, luego `powershell -NoProfile -ExecutionPolicy Bypass -File .\packaging\BUILD_EXE.ps1`. Requiere Python 3.12 x64, PyInstaller e Inno Setup 6. El ZIP propietario no se sube a Git: `packaging\FETCH_VBCABLE.ps1` lo descarga directamente del fabricante y comprueba su SHA-256.
 

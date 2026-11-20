@@ -37,9 +37,26 @@ function Show-Info([string]$message, [string]$title='SolarisPKN AntiCensor') {
     } catch { Write-Host "$title : $message" }
 }
 
+function Set-AntiCensorMicName {
+    # Display-name change is independent of the VB-Audio signed driver.
+    # If the endpoint appears only after a reboot, AntiCensor tray retries it.
+    $renamer = Join-Path $PSScriptRoot 'Renombrar-Mic.ps1'
+    if (!(Test-Path -LiteralPath $renamer)) {
+        Write-Warning "Mic rename helper not found; AntiCensor will retry after installation."
+        return
+    }
+    & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $renamer
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Could not rename endpoint yet; the tray will retry after Windows starts."
+    }
+}
+
 if (Get-VBCableDevice) {
     Write-Host (L "VB-CABLE ya está instalado." "VB-CABLE is already installed.")
-    if (-not $VerifyOnly) { Show-Info (L "VB-CABLE ya está instalado. No hace falta reinstalarlo." "VB-CABLE is already installed; no reinstall required.") }
+    if (-not $VerifyOnly) {
+        Set-AntiCensorMicName
+        Show-Info (L "VB-CABLE ya está instalado; AntiCensor intentó nombrar el micrófono como SolarisPKN-Mic Lelele." "VB-CABLE is already installed; AntiCensor checked the SolarisPKN-Mic Lelele display name.")
+    }
     exit 0
 }
 if (!(Test-Path -LiteralPath $Archive)) {
@@ -79,10 +96,11 @@ try {
         Show-Info "El instalador del fabricante terminó con código $($proc.ExitCode). Revisá su ventana y la guía de VB-Audio."
         exit 2
     }
+    Set-AntiCensorMicName
     Show-Info (L (
-        'Instalador VB-Audio finalizado. Reiniciá Windows. Después elegí CABLE Output como micrófono en Roblox.'
+        'Instalador VB-Audio finalizado. Reiniciá Windows. AntiCensor pondrá automáticamente el nombre SolarisPKN-Mic Lelele.'
     ) (
-        'VB-Audio installer finished. Restart Windows, then select CABLE Output as the microphone in Roblox.'
+        'VB-Audio installer finished. Restart Windows. AntiCensor will automatically name the microphone SolarisPKN-Mic Lelele.'
     ))
 } catch {
     $errorSpanish = "No se completó VB-CABLE: " + $_.Exception.Message +
