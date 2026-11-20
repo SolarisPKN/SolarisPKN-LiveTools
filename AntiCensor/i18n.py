@@ -1,0 +1,283 @@
+# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: GPL-3.0-only
+"""SolarisPKN AntiCensor — Spanish/English UI and installer language preferences.
+
+User preferences are stored separately from calibration data and never
+include audio samples. Translation fallback always returns Spanish.
+"""
+from __future__ import annotations
+
+import json
+import os
+from typing import Any
+
+LANGUAGES = {"es": "Español", "en": "English"}
+DEFAULT_LANGUAGE = "es"
+STRINGS: dict[str, dict[str, str]] = {
+    "es": {
+        "app_title": "SolarisPKN AntiCensor — SolarisPKN-Mic Lelele v{version}",
+        "tab_audio": "Micrófono y sonido",
+        "tab_calibration": "Calibración",
+        "language": "Idioma / Language:",
+        "product_identity": "Identidad AntiCensor: SolarisPKN-Mic Lelele",
+        "cable_explanation": "Dependencia: VB-CABLE (VB-Audio). En Windows/Roblox figura como CABLE Output hasta que lo renombres en las propiedades de sonido.",
+        "dependency_checking": "VB-CABLE: comprobando...",
+        "dependency_found": "VB-CABLE detectado: {name}",
+        "dependency_missing": "Falta VB-CABLE: instalalo y reiniciá Windows antes de transmitir.",
+        "vendor_install": "Instalar VB-CABLE / web oficial",
+        "reference_mic": "Micrófono de referencia (solo intensidad, NO reenviamos tu voz):",
+        "refresh_devices": "Actualizar dispositivos de entrada",
+        "synthetic_mode": "Sonido sintético que recibirá el micrófono virtual:",
+        "manual_threshold": "Umbral manual (solo SIN calibración)",
+        "volume": "Volumen máximo del sintetizador %",
+        "response": "Velocidad de respuesta %",
+        "intensity": "Intensidad enviada (verde → amarillo → rojo):",
+        "anchors": "Susurro ≈ 7,5%   ·   Voz normal ≈ 50%   ·   ROJO desde 85%",
+        "meter_idle": "-- dBFS  ·  Lelele: 0%",
+        "meter_readout": "Mic físico: {db:.1f} dBFS  ·  Lelele: {percent:.1f}%  ·  {color}",
+        "green": "VERDE",
+        "yellow": "AMARILLO",
+        "red": "ROJO",
+        "start": "ACTIVAR MICRÓFONO",
+        "stop": "DETENER",
+        "initial_status": "Calibrá tu voz; se requiere VB-CABLE para transmitir Lelele.",
+        "obs_note": "OBS puede usar tu voz real. Roblox solo recibe el Lelele artificial.",
+        "cal_title": "Calibración para cada micrófono",
+        "cal_explanation": "Mide el susurro, la voz normal y, si querés, también el grito.",
+        "device_label": "Dispositivo: —",
+        "selected_source": "Fuente seleccionada: {device}",
+        "shout_checkbox": "Habilitar calibración de grito (opcional)",
+        "shout_explanation": "Sin marcarlo, Solaris calcula automáticamente el máximo desde tu susurro y voz normal.",
+        "cal_start": "INICIAR CALIBRACIÓN (sin driver)",
+        "cal_cancel": "CANCELAR CALIBRACIÓN",
+        "cal_ready": "Preparado para medir ambiente, susurro y voz normal.",
+        "cal_privacy": "No se graba audio: solo medimos intensidad RMS (dBFS).",
+        "cal_profile": "Perfil de este dispositivo:",
+        "cal_not_saved": "Sin calibración guardada",
+        "cal_clear": "Borrar calibración de este dispositivo",
+        "cal_not_calibrated": "SIN CALIBRAR. Podés calibrar sin instalar VB-CABLE; el modo manual está disponible.",
+        "cal_press_start": "Iniciá la calibración del micrófono seleccionado.",
+        "cal_summary": "Ruido: {noise:.1f} dBFS\nSusurro: {whisper:.1f} dBFS → 7,5% de Lelele\nNormal: {normal:.1f} dBFS → 50% de Lelele\nGrito: {shout:.1f} dBFS → 100% ({method})\nZona roja: desde el 85%.",
+        "measured": "medido",
+        "automatic": "automático",
+        "cal_saved_title": "Perfil guardado. Podés recalibrarlo cuando quieras.",
+        "cal_deleted": "Calibración borrada del dispositivo seleccionado.",
+        "cal_deletion_failed": "No pude guardar el borrado: {error}",
+        "no_input": "Elegí un micrófono físico de referencia para medir tu voz.",
+        "device_enumeration_failed": "No pude enumerar micrófonos: {error}",
+        "recording_failed": "No se pudo abrir el micrófono seleccionado:\n{error}",
+        "cal_recording": "Midiendo solo RMS, sin grabar palabras ni archivos de audio.",
+        "cal_cancelled": "Calibración cancelada. No se guardaron cambios.",
+        "cal_bad": "Calibración inválida",
+        "cal_incomplete": "Calibración incompleta",
+        "cal_retry": "{error}\nVolvé a intentarlo distinguiendo bien cada etapa.",
+        "cal_completed": "¡Calibración completada y guardada! Solo guardé niveles dBFS.",
+        "cal_memory_only": "Calibración aplicada solo en memoria: {error}",
+        "cal_step": "Etapa {step}/{total} — {description}",
+        "stage_noise": "Silencio: no hables ni hagas ruido",
+        "stage_whisper": "Susurrá algunas palabras suavemente",
+        "stage_normal": "Hablá como en una conversación normal",
+        "stage_shout": "Hablá fuerte o gritá brevemente (opcional)",
+        "cal_prepare_timer": "Preparación: {seconds:.1f}s. Nunca guardamos tu voz.",
+        "cal_record_timer": "¡Midiendo ahora! Quedan {seconds:.1f}s. Nivel: {db:.1f} dBFS.",
+        "without_cal": "Sin calibración",
+        "without_cal_ask": "Todavía no calibraste este micrófono. ¿Querés activar el modo manual?",
+        "missing_dep_title": "Falta VB-CABLE",
+        "missing_dep_ask": "Instalá VB-CABLE desde VB-Audio, reiniciá Windows y actualizá los dispositivos. ¿Abrir la web oficial?",
+        "cannot_start": "No pude activar VB-CABLE",
+        "active_status": "ACTIVO: tu voz solo controla el volumen. El Lelele se envía a {device} por VB-CABLE.",
+        "stopped_status": "Micrófono virtual detenido.",
+        "stream_error": "Error de audio VB-CABLE: {error}",
+        "mode_Lelele": "Lelele",
+        "mode_Robot": "Robot",
+        "mode_Pitidos": "Pitidos",
+        "mode_Ruido": "Ruido",
+        "tray_open": "Abrir configuración",
+        "tray_cal": "Calibrar micrófono",
+        "tray_check": "Buscar actualizaciones ahora",
+        "tray_repo": "Configurar repositorio GitHub",
+        "tray_release": "Abrir última actualización",
+        "tray_exit": "Salir completamente",
+        "update_title": "Nueva versión de AntiCensor",
+        "update_question": "{message}\n\n¿Abrir la Release oficial en GitHub?",
+        "update_dialog": "AntiCensor — actualizaciones",
+        "repo_title": "Repositorio de actualizaciones",
+        "repo_question": "Repositorio oficial GitHub (propietario/nombre):\nSolo se consultan Releases públicas; no instalamos EXE automáticamente.",
+        "repo_updated": "Repositorio actualizado",
+        "repo_invalid": "Repositorio inválido",
+        "update_busy": "Ya hay otra comprobación en curso.",
+        "update_not_due": "Aún no pasaron siete días desde la última revisión.",
+        "update_bad_version": "Versión de Release desconocida: {tag}",
+        "update_bad_local_version": "Versión instalada no válida.",
+        "update_bad_url": "La Release devolvió un enlace inesperado.",
+        "update_available": "Disponible AntiCensor {tag}; instalada {version}.",
+        "update_current": "AntiCensor {version} está actualizado.",
+        "update_missing": "El repositorio aún no tiene una Release pública de AntiCensor.",
+        "update_offline": "No pude consultar GitHub: {error}",
+        "update_worker_error": "Error al comprobar actualizaciones: {error}",
+        "err_no_rms": "No hubo mediciones válidas durante esta etapa.",
+        "err_db_range": "Los niveles deben estar entre -100 y 0 dBFS.",
+        "err_whisper": "El susurro debe superar el ruido ambiente por 4 dB como mínimo.",
+        "err_normal": "La voz normal debe superar el susurro por 4 dB como mínimo.",
+        "err_shout": "El grito debe superar la voz normal por 4 dB como mínimo.",
+        "err_too_few": "Muy pocas mediciones. Revisá tu micrófono y repetí.",
+        "err_stage": "Etapa de calibración desconocida.",
+        "err_out_of_range": "Medición fuera de rango.",
+        "err_no_pcm": "Bloque de audio sintético inválido.",
+        "calibrating": "Calibrando...",
+
+    },
+    "en": {
+        "app_title": "SolarisPKN AntiCensor — SolarisPKN-Mic Lelele v{version}",
+        "tab_audio": "Microphone & sound",
+        "tab_calibration": "Calibration",
+        "language": "Language / Idioma:",
+        "product_identity": "AntiCensor device identity: SolarisPKN-Mic Lelele",
+        "cable_explanation": "Dependency: VB-CABLE (VB-Audio). Windows/Roblox lists the recording device as CABLE Output unless you rename it in Windows sound settings.",
+        "dependency_checking": "VB-CABLE: checking...",
+        "dependency_found": "VB-CABLE detected: {name}",
+        "dependency_missing": "VB-CABLE is missing: install it and restart Windows before streaming.",
+        "vendor_install": "Install VB-CABLE / official website",
+        "reference_mic": "Reference microphone (volume level only, your voice is NOT forwarded):",
+        "refresh_devices": "Refresh input devices",
+        "synthetic_mode": "Synthetic sound sent to the virtual microphone:",
+        "manual_threshold": "Manual threshold (only WITHOUT calibration)",
+        "volume": "Maximum synthesizer volume %",
+        "response": "Response speed %",
+        "intensity": "Sent volume (green → yellow → red):",
+        "anchors": "Whisper ≈ 7.5%   ·   Normal speech ≈ 50%   ·   RED from 85%",
+        "meter_idle": "-- dBFS  ·  Lelele: 0%",
+        "meter_readout": "Physical mic: {db:.1f} dBFS  ·  Lelele: {percent:.1f}%  ·  {color}",
+        "green": "GREEN",
+        "yellow": "YELLOW",
+        "red": "RED",
+        "start": "ENABLE MICROPHONE",
+        "stop": "STOP",
+        "initial_status": "Calibrate your voice; VB-CABLE is required to stream Lelele.",
+        "obs_note": "OBS can keep using your real voice. Roblox only receives synthetic Lelele.",
+        "cal_title": "Per-microphone calibration",
+        "cal_explanation": "Measure whisper, normal voice and optionally your shout.",
+        "device_label": "Device: —",
+        "selected_source": "Selected source: {device}",
+        "shout_checkbox": "Enable shout calibration (optional)",
+        "shout_explanation": "If disabled, Solaris estimates the maximum from whisper and normal speech.",
+        "cal_start": "START CALIBRATION (no driver required)",
+        "cal_cancel": "CANCEL CALIBRATION",
+        "cal_ready": "Ready to measure room noise, whisper and normal speech.",
+        "cal_privacy": "No audio is recorded: only RMS loudness (dBFS) is measured.",
+        "cal_profile": "Profile for this device:",
+        "cal_not_saved": "No saved calibration",
+        "cal_clear": "Delete this device's calibration",
+        "cal_not_calibrated": "NOT CALIBRATED. You can calibrate without VB-CABLE; manual mode is available.",
+        "cal_press_start": "Start calibration for the selected microphone.",
+        "cal_summary": "Room noise: {noise:.1f} dBFS\nWhisper: {whisper:.1f} dBFS → 7.5% Lelele\nNormal speech: {normal:.1f} dBFS → 50% Lelele\nShout: {shout:.1f} dBFS → 100% ({method})\nRed zone: 85% and above.",
+        "measured": "measured",
+        "automatic": "estimated",
+        "cal_saved_title": "Profile saved. You can recalibrate at any time.",
+        "cal_deleted": "Calibration deleted for the selected device.",
+        "cal_deletion_failed": "Could not save deletion: {error}",
+        "no_input": "Choose a physical reference microphone to measure your voice.",
+        "device_enumeration_failed": "Could not list microphones: {error}",
+        "recording_failed": "Could not open the selected microphone:\n{error}",
+        "cal_recording": "Measuring RMS only. No words or audio files are recorded.",
+        "cal_cancelled": "Calibration cancelled. No changes were saved.",
+        "cal_bad": "Invalid calibration",
+        "cal_incomplete": "Incomplete calibration",
+        "cal_retry": "{error}\nTry again and make each stage distinct.",
+        "cal_completed": "Calibration completed and saved! Only dBFS values were stored.",
+        "cal_memory_only": "Calibration only stored in memory: {error}",
+        "cal_step": "Stage {step}/{total} — {description}",
+        "stage_noise": "Silence: do not talk or make noise",
+        "stage_whisper": "Whisper a few words softly",
+        "stage_normal": "Speak in your normal conversational voice",
+        "stage_shout": "Speak loudly or shout briefly (optional)",
+        "cal_prepare_timer": "Get ready: {seconds:.1f}s. Your voice is never stored.",
+        "cal_record_timer": "Measuring now! {seconds:.1f}s left. Level: {db:.1f} dBFS.",
+        "without_cal": "Not calibrated",
+        "without_cal_ask": "This reference microphone has not been calibrated. Enable manual mode anyway?",
+        "missing_dep_title": "VB-CABLE dependency missing",
+        "missing_dep_ask": "Install VB-CABLE from VB-Audio, restart Windows, then refresh input devices. Open the official website?",
+        "cannot_start": "Could not enable VB-CABLE",
+        "active_status": "ACTIVE: your voice only controls volume. Synthetic Lelele is sent through VB-CABLE to {device}.",
+        "stopped_status": "Virtual microphone stopped.",
+        "stream_error": "VB-CABLE audio error: {error}",
+        "mode_Lelele": "Lelele",
+        "mode_Robot": "Robot",
+        "mode_Pitidos": "Beeps",
+        "mode_Ruido": "Noise",
+        "tray_open": "Open settings",
+        "tray_cal": "Calibrate microphone",
+        "tray_check": "Check for updates now",
+        "tray_repo": "Configure GitHub repository",
+        "tray_release": "Open latest update",
+        "tray_exit": "Quit completely",
+        "update_title": "New AntiCensor version",
+        "update_question": "{message}\n\nOpen the official GitHub Release?",
+        "update_dialog": "AntiCensor — updates",
+        "repo_title": "Update repository",
+        "repo_question": "Official GitHub repository (owner/name):\nOnly public Releases are checked; no EXE is installed automatically.",
+        "repo_updated": "Repository updated",
+        "repo_invalid": "Invalid repository",
+        "update_busy": "An update check is already running.",
+        "update_not_due": "Seven days have not passed since the last check.",
+        "update_bad_version": "Unrecognized Release version: {tag}",
+        "update_bad_local_version": "Invalid installed version.",
+        "update_bad_url": "The Release returned an unexpected URL.",
+        "update_available": "AntiCensor {tag} is available; installed version: {version}.",
+        "update_current": "AntiCensor {version} is up to date.",
+        "update_missing": "This repository has no public AntiCensor Release yet.",
+        "update_offline": "Could not check GitHub: {error}",
+        "update_worker_error": "Update check failed: {error}",
+        "err_no_rms": "No valid readings were recorded in this stage.",
+        "err_db_range": "All calibration levels must be between -100 and 0 dBFS.",
+        "err_whisper": "Whisper must exceed room noise by at least 4 dB.",
+        "err_normal": "Normal speech must exceed whisper by at least 4 dB.",
+        "err_shout": "Shout must exceed normal speech by at least 4 dB.",
+        "err_too_few": "Too few measurements. Check your microphone and retry.",
+        "err_stage": "Unknown calibration stage.",
+        "err_out_of_range": "Measurement out of range.",
+        "err_no_pcm": "Invalid synthetic audio packet.",
+        "calibrating": "Calibrating...",
+
+    }
+}
+
+
+def normalize_language(value: object) -> str:
+    return value if value in LANGUAGES else DEFAULT_LANGUAGE
+
+
+def preference_path() -> str:
+    base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+    return os.path.join(base, "SolarisPKN", "AntiCensor", "preferences.json")
+
+
+def get_language() -> str:
+    try:
+        with open(preference_path(), encoding="utf-8") as file:
+            saved = json.load(file)
+        if isinstance(saved, dict):
+            return normalize_language(saved.get("language"))
+    except (OSError, ValueError):
+        pass
+    return DEFAULT_LANGUAGE
+
+
+def save_language(language: str) -> None:
+    if language not in LANGUAGES:
+        raise ValueError("Unsupported language")
+    path = preference_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as file:
+            json.dump({"language": language}, file, ensure_ascii=False, indent=2)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+
+
+def t(key: str, language: str = DEFAULT_LANGUAGE, **values: Any) -> str:
+    base = STRINGS[normalize_language(language)].get(key, STRINGS[DEFAULT_LANGUAGE].get(key, key))
+    return base.format(**values) if values else base

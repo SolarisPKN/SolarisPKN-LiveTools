@@ -1,0 +1,30 @@
+VB-CABLE BASIC — THIRD-PARTY DEPENDENCY / DEPENDENCIA EXTERNA
+
+ENGLISH
+Vendor: VB-Audio Software (Vincent Burel).
+Official website: https://vb-audio.com/Cable/
+Licensing / distribution: https://vb-audio.com/Services/licensing.htm
+
+VB-CABLE is proprietary DONATIONWARE, not GPLv3. The official unchanged
+VB-CABLE Basic Pack46 ZIP is included in the Windows installer, preserving
+vendor copyright and terms. For professional deployments or redistribution,
+check the licensing rules and obtain any required paid licenses.
+Uninstalling AntiCensor does not remove VB-CABLE because other software may
+depend on it. The GPLv3 applies only to AntiCensor's own source code.
+The ZIP is not committed to the source repository.
+
+ESPAÑOL
+Fabricante: VB-Audio Software (Vincent Burel).
+Web oficial: https://vb-audio.com/Cable/
+Licencias / distribución: https://vb-audio.com/Services/licensing.htm
+
+VB-CABLE es DONATIONWARE propietario, no GPLv3. El ZIP original sin modificar
+de VB-CABLE básico Pack46 se incluye en el instalador de Windows conservando
+los derechos y términos del fabricante. Para distribución profesional,
+consultar las licencias necesarias y adquirirlas cuando corresponda.
+Desinstalar AntiCensor no elimina VB-CABLE, porque otros programas podrían
+utilizarlo. GPLv3 solo se aplica al código propio de AntiCensor.
+El ZIP no se sube al repositorio de código fuente.
+
+OFFICIAL ZIP SHA-256 / HASH OFICIAL:
+BC44E8974191A5A2427D6C979E2DAB08DBB09925F3F435DFA2F0BA3E45B6EB90

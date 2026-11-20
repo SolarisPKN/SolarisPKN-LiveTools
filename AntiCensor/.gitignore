@@ -1,0 +1,23 @@
+# SolarisPKN AntiCensor - source-only Git module
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+dist/
+build/
+packaging/build/
+packaging/tools/
+packaging/third_party/*.zip
+packaging/*.ico
+packaging/*.spec
+packaging/*.log
+*.exe
+*.sys
+*.cat
+*.inf
+*.pfx
+*.pvk
+*.cer
+*.p12
+*.log
+.DS_Store
