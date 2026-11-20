@@ -85,9 +85,10 @@ try {
         'VB-Audio installer finished. Restart Windows, then select CABLE Output as the microphone in Roblox.'
     ))
 } catch {
-    Show-Info (L ("No se completó VB-CABLE: " + $_.Exception.Message +
-                   [Environment]::NewLine + "Instalación manual: " + $OfficialPage)
-                 ("VB-CABLE installation was not completed: " + $_.Exception.Message +
-                   [Environment]::NewLine + "Manual install: " + $OfficialPage))
+    $errorSpanish = "No se completó VB-CABLE: " + $_.Exception.Message +
+                    [Environment]::NewLine + "Instalación manual: " + $OfficialPage
+    $errorEnglish = "VB-CABLE installation was not completed: " + $_.Exception.Message +
+                    [Environment]::NewLine + "Manual install: " + $OfficialPage
+    Show-Info (L $errorSpanish $errorEnglish)
     exit 3
 }
