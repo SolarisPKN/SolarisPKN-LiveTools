@@ -1,8 +1,8 @@
-# Instalar SolarisPKN-AntiCensor v0.8.1
+# Instalar SolarisPKN-AntiCensor v0.8.2
 
 [English](README_INSTALADOR.md) · [README del módulo](README.es.md)
 
-Windows 10/11 x64. El instalador **SolarisPKN-AntiCensor-Setup-v0.8.1.exe** incluye la aplicación GPLv3 con **modo oscuro Solaris Tray**, menú bilingüe y solo LELELE.
+Windows 10/11 x64. El instalador **SolarisPKN-AntiCensor-Setup-v0.8.2.exe** incluye la aplicación GPLv3 con **modo oscuro Solaris Tray**, menú bilingüe y solo LELELE.
 
 **VB-CABLE**, del fabricante VB-Audio Software, es una dependencia externa propietaria donationware. Si falta, el instalador permite instalarlo con su herramienta oficial (UAC y reinicio). Si existe, **no ofrece reinstalarlo**: muestra únicamente **Limpiar driver (solo errores)** con advertencia y confirmación; abre la utilidad del fabricante y no borra nada automáticamente. No desactiva Secure Boot.
 
@@ -13,3 +13,5 @@ Al instalar o iniciar, AntiCensor intenta poner al dispositivo de grabación el 
 **Ajustes de updates:** checkbox semanal opcional; desmarcado, solamente chequeo manual. Los paquetes oficiales se descargan, comprueban con SHA-256 y **se instalan solo al cerrar AntiCensor o al próximo inicio de Windows**, nunca durante el stream. Fuente fija: **SolarisPKN/SolarisPKN-LiveTools/SolarisPKN-AntiCensor**.
 
 Desinstalar AntiCensor desde Aplicaciones no desinstala VB-CABLE. Condiciones de VB-Audio: https://vb-audio.com/Services/licensing.htm. Pendientes pruebas reales con Roblox/OBS.
+
+**Nombre automático v0.8.2:** si Windows bloquea la API de propiedades, el asistente de la bandeja usa el diálogo estándar de Sonido y selecciona únicamente VB-CABLE para renombrarlo. No cambia la firma del driver. El repositorio de updates es fijo y NO editable.

@@ -121,7 +121,9 @@ namespace SolarisPKNAntiCensor {
                         // Both the basic VB-CABLE identity and Capture direction
                         // must match. Exclude A/B/C/D and any hardware microphone.
                         bool basic = description.Equals("CABLE Output", StringComparison.OrdinalIgnoreCase) ||
-                                     friendly.StartsWith("CABLE Output (", StringComparison.OrdinalIgnoreCase);
+                                     description.Equals(desiredName, StringComparison.OrdinalIgnoreCase) ||
+                                     friendly.StartsWith("CABLE Output (", StringComparison.OrdinalIgnoreCase) ||
+                                     friendly.StartsWith(desiredName + " (", StringComparison.OrdinalIgnoreCase);
                         bool vendor = ContainsVendor(adapter) || ContainsVendor(friendly) ||
                                       String.Equals(friendly, desiredName, StringComparison.OrdinalIgnoreCase);
                         if (basic && vendor) {
@@ -144,7 +146,9 @@ namespace SolarisPKNAntiCensor {
                 } finally {
                     if (oldStore != null) Marshal.ReleaseComObject(oldStore);
                 }
-                if (String.Equals(oldName, desiredName, StringComparison.Ordinal))
+                if (String.Equals(oldName, desiredName, StringComparison.Ordinal) ||
+                    (oldName.StartsWith(desiredName + " (", StringComparison.OrdinalIgnoreCase) &&
+                     ContainsVendor(oldName)))
                     return "ALREADY";
                 if (probeOnly) return "READY";
                 IPropertyStore writable = null;
@@ -192,6 +196,23 @@ try {
     # driver is correctly installed. Do not retry every 60 seconds or change
     # registry ACLs, AudioSrv, the kernel driver or Secure Boot.
     if ($message -match '0x80070005|E_ACCESSDENIED|Acceso denegado|Access is denied') {
+        # Microsoft-signed VB-CABLE may restrict the property store. Use the
+        # Windows Sound Properties UI in the user's interactive desktop,
+        # not registry ACL changes, unsigned drivers or kernel patching.
+        $gui=Join-Path $PSScriptRoot 'Renombrar-Mic-GUI.ps1'
+        $username=[Security.Principal.WindowsIdentity]::GetCurrent().Name
+        $session=(Get-Process -Id $PID).SessionId
+        if (-not $Probe -and $session -gt 0 -and
+            $username -ne 'NT AUTHORITY\SYSTEM' -and (Test-Path -LiteralPath $gui)) {
+            try {
+                $answer=& powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $gui 2>&1
+                $status=@($answer | Where-Object { [string]$_ -match '^ANTICENSOR_ENDPOINT_NAME=' }) | Select-Object -Last 1
+                if ($status) {
+                    Write-Output ([string]$status)
+                    exit 0
+                }
+            } catch { }
+        }
         Write-Output 'ANTICENSOR_ENDPOINT_NAME=NOT_PERMITTED'
         exit 0
     }

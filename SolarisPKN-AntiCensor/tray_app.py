@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Iniciador de Windows con menú AntiCensor en bandeja del sistema (junto al reloj).
 
-Clic derecho -> Configuración, Calibrar, Buscar updates, Repo, Salir.
+Clic derecho -> Configuración, Calibrar, Buscar updates, Ajustes, Salir. Repositorio FIJO.
 Cierre de ventana oculta al tray; "Salir" hace el cierre real.
 """
 from __future__ import annotations
@@ -14,7 +14,7 @@ import subprocess
 import sys
 import threading
 import tkinter as tk
-from tkinter import messagebox, simpledialog
+from tkinter import messagebox
 import webbrowser
 
 from PIL import Image, ImageDraw
@@ -199,7 +199,7 @@ class TrayAntiCensor:
 
     def start_rename(self):
         """Rename only the VB-CABLE recording endpoint; never modify driver files."""
-        if self.closed or self.rename_complete or self.rename_running:
+        if self.closed or self.rename_complete or self.rename_running or self.app.active or self.app.calibrating:
             return
         script = self.mic_rename_script()
         if script is None:

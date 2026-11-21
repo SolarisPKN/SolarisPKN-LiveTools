@@ -4,7 +4,7 @@
 
 Módulo oficial de [SolarisPKN-LiveTools](https://github.com/SolarisPKN/SolarisPKN-LiveTools/tree/main/SolarisPKN-AntiCensor), aplicación **GPLv3** para Windows. Solo mide la intensidad RMS del micrófono físico seleccionado y envía **LELELE**, nunca la voz real. Por ahora usa una síntesis Lelele temporal, pendiente de incorporar la grabación WAV original.
 
-**Versión preliminar 0.8.1.** Interfaz oscura, calibración, actualizador e instalador implementados; falta prueba real completa en Roblox.
+**Versión preliminar 0.8.2.** Interfaz oscura, calibración, actualizador e instalador implementados; falta prueba real completa en Roblox.
 
 ## Características
 - **Modo oscuro obligatorio como Solaris Tray:** fondo #1D1D27, texto claro y acentos verde menta.
@@ -39,9 +39,9 @@ La ruta oficial es **SolarisPKN/SolarisPKN-LiveTools/SolarisPKN-AntiCensor**, fi
 - **Nunca instala con AntiCensor abierto ni interrumpe el stream.** El auxiliar de Windows instala después de que cierres la app, o antes de lanzarla en el próximo inicio de sesión; no reinicia Windows ni detiene otro programa.
 - Si no hay Release con instalador y SHA-256, no ejecuta nada.
 
-**Nombre visible:** Windows 10 en la PC de pruebas devolvió E_ACCESSDENIED al intentar cambiar el nombre de VB-CABLE. AntiCensor deja de reintentarlo y sigue usando CABLE Output sin tocar permisos del registro ni archivos del fabricante.
+**Nombre verificado en Windows:** la API de audio devolvía `E_ACCESSDENIED`, por lo que AntiCensor ahora usa automáticamente las propiedades de sonido desde la sesión interactiva. Se consiguió **SolarisPKN-Mic Lelele (VB-Audio Virtual Cable)** y se verificó con Windows PnP, sin alterar el driver ni permisos del sistema.
 
 ## Compilación y licencia
-En Windows 10/11 x64: ejecutar INSTALAR.ps1 y packaging/BUILD_EXE.ps1 con Python 3.12, PyInstaller e Inno Setup 6. Se obtienen el EXE portátil y el Setup v0.8.1. El ZIP del proveedor se descarga desde VB-Audio y se valida su SHA-256; **no se sube a Git**.
+En Windows 10/11 x64: ejecutar INSTALAR.ps1 y packaging/BUILD_EXE.ps1 con Python 3.12, PyInstaller e Inno Setup 6. Se obtienen el EXE portátil y el Setup v0.8.2. El ZIP del proveedor se descarga desde VB-Audio y se valida su SHA-256; **no se sube a Git**.
 
 Código original GPL-3.0-only ([LICENSE](LICENSE)); VB-CABLE mantiene su licencia independiente. No se incluye el controlador experimental MicyWMD. Quedan pendientes pruebas de latencia, Roblox, OBS, persistencia del nombre visible y una actualización real desde GitHub Releases.

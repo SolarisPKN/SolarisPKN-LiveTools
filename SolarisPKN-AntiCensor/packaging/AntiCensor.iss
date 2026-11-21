@@ -1,6 +1,6 @@
 ; SolarisPKN AntiCensor GPLv3 installer. No unsigned kernel driver!
 #define ProjectRoot AddBackslash(SourcePath) + ".."
-#define Version "0.8.1"
+#define Version "0.8.2"
 [Setup]
 AppId={{8FE390B9-D2BC-43F7-91E6-23AFBE4A0B32}
 AppName=SolarisPKN AntiCensor
@@ -22,7 +22,7 @@ SolidCompression=yes
 CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
-VersionInfoVersion=0.8.1.0
+VersionInfoVersion=0.8.2.0
 VersionInfoCompany=SolarisPKN
 VersionInfoDescription=SolarisPKN AntiCensor GPLv3 Installer
 
@@ -69,7 +69,9 @@ Source: "{#ProjectRoot}\packaging\Instalar-VBCable.ps1"; DestDir: "{app}\scripts
 Source: "{#ProjectRoot}\packaging\Apply-PendingUpdate.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\Start-AntiCensor.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\Renombrar-Mic.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
+Source: "{#ProjectRoot}\packaging\Renombrar-Mic-GUI.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\Renombrar-Mic.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
+Source: "{#ProjectRoot}\packaging\Renombrar-Mic-GUI.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\Instalar-VBCable.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 Source: "{#ProjectRoot}\updater.py"; DestDir: "{app}\source"; Flags: ignoreversion
 Source: "{#ProjectRoot}\tray_app.py"; DestDir: "{app}\source"; Flags: ignoreversion
@@ -81,6 +83,7 @@ Source: "{#ProjectRoot}\tests\test_pcm_synth.py"; DestDir: "{app}\source\tests";
 Source: "{#ProjectRoot}\tests\test_updater.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\tests\test_vbcable_backend.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\tests\test_endpoint_rename.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
+Source: "{#ProjectRoot}\tests\test_fixed_repo_and_name.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\AntiCensor.iss"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\BUILD_EXE.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\Apply-PendingUpdate.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
