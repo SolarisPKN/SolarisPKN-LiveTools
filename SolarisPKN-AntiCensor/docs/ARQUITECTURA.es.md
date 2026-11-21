@@ -22,6 +22,6 @@ Gadnic/Realtek (captura WASAPI) → medición RMS + WebRTC VAD clásico → comp
 - OBS puede capturar la entrada Gadnic física **antes o con filtros propios**. AntiCensor procesa su propia entrada y no hereda filtros de OBS.
 
 ## 🧪 Pruebas y privacidad
-61 pruebas automatizadas registradas en el entorno de desarrollo. Se verifican en ellas parámetros y regresiones; **no** garantizan que Roblox siempre seleccione el dispositivo correcto. La documentación pública no incluye direcciones IP, credenciales, archivos de OBS del usuario ni diagnósticos de red.
+66 pruebas automatizadas registradas en el entorno de desarrollo. Se verifican en ellas parámetros y regresiones; **no** garantizan que Roblox siempre seleccione el dispositivo correcto. La documentación pública no incluye direcciones IP, credenciales, archivos de OBS del usuario ni diagnósticos de red.
 
 [Licencias](PRIVACIDAD.es.md) · [Guía](GUIA-DE-USO.es.md)

@@ -5,6 +5,9 @@
 
 **Software developed by [SolarisPKN-Labs](https://labs.solarispkn.com.ar/).**
 
+## 🎮 Why the project exists
+**I'm a streamer who plays horror experiences on Roblox.** A jump scare sometimes makes me swear on air; I got tired of receiving **sanctions** and losing **voice-chat access** because of spontaneous reactions. I wanted to keep playing voice-driven horror experiences without broadcasting my actual words into Roblox chat. AntiCensor was born to generate **synthetic Lelele** when I speak, while OBS can still use my normal speaking voice for the audience. The effect does not guarantee exemption from moderation or Roblox rules.
+
 ## 🎮 Purpose
 Make a compatible game receive **synthetic Lelele** when likely speech is detected on a physical microphone, while OBS can stream your natural voice via a separate source. AntiCensor neither transcribes words nor forwards physical mic samples to VB-CABLE.
 

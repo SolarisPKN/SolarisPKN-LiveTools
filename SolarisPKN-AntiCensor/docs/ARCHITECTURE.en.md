@@ -22,6 +22,6 @@ Gadnic/Realtek (WASAPI capture) → RMS metering + classical WebRTC VAD → spee
 - OBS can separately capture the physical mic with its filters. AntiCensor's own capture does not inherit OBS filters.
 
 ## 🧪 Verification and privacy
-61 automated development tests passed. This cannot guarantee Roblox selection or compatibility on every system. Public docs exclude user IP addresses, credentials, OBS profiles and local diagnostic reports.
+66 automated development tests passed. This cannot guarantee Roblox selection or compatibility on every system. Public docs exclude user IP addresses, credentials, OBS profiles and local diagnostic reports.
 
 [Licensing](PRIVACY.en.md) · [Guide](USER-GUIDE.en.md)

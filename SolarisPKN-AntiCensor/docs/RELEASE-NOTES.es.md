@@ -1,6 +1,9 @@
 # 🚀 SolarisPKN AntiCensor v0.8.5 — Novedades
 🇦🇷 Español · [🇬🇧 English](RELEASE-NOTES.en.md)
 
+### 🎮 Origen del proyecto
+AntiCensor nació porque, al streamear **juegos de terror en Roblox**, un susto podía hacerme soltar alguna palabrota. Me cansé de las **sanciones** y de perder la posibilidad de participar en experiencias con **chat de voz**. La propuesta es separar mi voz real para OBS del efecto sintético **Lelele** que recibe el juego, sin prometer que evita la moderación de Roblox.
+
 ### 🎙️ Qué hay de nuevo
 - 🧠 **WebRTC VAD clásico** con nivel 0–3, activado por defecto (2). No hay transcripción de palabras ni LLM.
 - 🖱️ Menos falsas activaciones por clics aislados, con umbral temporal y cola suave.
@@ -9,7 +12,7 @@
 - 🦊 **Portada ilustrada oficial** visible en README y pestaña Acerca de.
 - 💚 **Software desarrollado por SolarisPKN-Labs**, https://labs.solarispkn.com.ar/
 - 🌍 Manuales bilingües, SVG, GIF y ejemplos de uso con Roblox, Gadnic, SteelSeries Sonar, Redragon y OBS.
-- ✅ 61 pruebas automatizadas aprobadas en el entorno de desarrollo.
+- ✅ 66 pruebas automatizadas aprobadas en el entorno de desarrollo.
 
 ### ⚠️ Limitaciones
 No hay cancelación de eco avanzada. El cable es compartido y otras apps pueden escribir audio a CABLE Input. Las pruebas en algunos juegos, así como regresiones de rutas específicas, deben repetirse por el usuario.

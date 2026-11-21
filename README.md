@@ -28,7 +28,7 @@ The goal is to build infrastructure for creators.
 
 <p align="center"><a href="SolarisPKN-AntiCensor/README.md"><img src="SolarisPKN-AntiCensor/docs/assets/cover.webp" alt="AntiCensor original streamer cover" width="210"></a></p>
 
-🦊 **[SolarisPKN-AntiCensor](SolarisPKN-AntiCensor/README.md)** — A GPLv3 synthetic **Lelele** virtual microphone for compatible games. Classical WebRTC VAD, privacy-conscious real-voice separation, bilingual docs, SVG diagrams and animated GIF. 🎮🎙️
+🦊 **[SolarisPKN-AntiCensor](SolarisPKN-AntiCensor/README.md)** — Born during Roblox horror streams: jump scares sometimes triggered accidental swearing, and the creator was tired of voice-chat sanctions. This GPLv3 virtual microphone generates synthetic **Lelele** instead of forwarding actual words into the game, while OBS can retain real commentary. Includes classical WebRTC VAD, bilingual guides, SVG diagrams and animated GIF. 🎮🎙️
 
 **Software developed by [SolarisPKN-Labs](https://labs.solarispkn.com.ar/).**
 

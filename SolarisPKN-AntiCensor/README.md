@@ -6,7 +6,15 @@
 
 🎮 An experimental virtual microphone for gaming, streaming and roleplay. **Speak into your real mic and AntiCensor generates synthetic Lelele for your game instead of forwarding your real voice.** OBS may independently stream your natural speech to viewers. 💚
 
-🧪 Windows 10/11 x64 preview · 🛠️ GPL-3.0-only · 🌍 Spanish/English · ✅ 61 automated tests passed in development. Tests do not imply universal end-to-end compatibility.
+## 🚨 Why AntiCensor was born: horror streams, jump scares and accidental swearing
+
+**I'm a streamer who loves Roblox horror games.** But when a jump scare catches me off guard, sometimes a **swear word slips out** live. I got tired of Roblox issuing sanctions and losing access to **voice chat**, especially in horror experiences where speaking and reacting is part of the fun.
+
+That's why I built **SolarisPKN-AntiCensor**: I wanted to react naturally for my viewers without sending those spontaneous swear words into the game's voice chat. My **Gadnic microphone** detects when I speak, but **Roblox receives newly synthesized “Lelele” instead of my actual words**. Meanwhile, **OBS can keep broadcasting my real commentary** independently.
+
+🎙️ **It doesn't transcribe, bleep or censor individual words: the game simply doesn't receive my original voice through AntiCensor.** It does not guarantee avoiding sanctions or replace Roblox's voice-chat rules.
+
+🧪 Windows 10/11 x64 preview · 🛠️ GPL-3.0-only · 🌍 Spanish/English · ✅ 66 automated tests passed in development. Tests do not imply universal end-to-end compatibility.
 
 <p align="center"><img src="docs/assets/voice-gate-demo.gif" width="710" alt="Animated tutorial: noise, probable voice, synthetic Lelele"></p>
 

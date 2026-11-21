@@ -5,6 +5,9 @@
 
 **Software desarrollado por [SolarisPKN-Labs](https://labs.solarispkn.com.ar/).**
 
+## 🎮 Por qué nació el proyecto
+**Soy streamer y juego experiencias de terror en Roblox.** Un susto puede hacer que se me escape una palabrota al aire; me cansé de recibir **sanciones** y quedarme sin **chat de voz** por esas reacciones. Quería poder seguir jugando experiencias de terror basadas en hablar, sin que mis palabras reales llegaran al chat de Roblox. AntiCensor nació para generar **Lelele sintético** cuando hablo, mientras OBS puede seguir usando mi voz natural en el stream. El efecto no garantiza inmunidad a moderación ni reemplaza las reglas de Roblox.
+
 ## 🎮 Objetivo
 Hacer que un juego compatible reciba **Lelele artificial** generado cuando detectamos voz en un micrófono físico, mientras OBS puede transmitir una voz real por una fuente separada. **No** se reconocen palabras ni se envían samples del micrófono físico al cable desde AntiCensor.
 

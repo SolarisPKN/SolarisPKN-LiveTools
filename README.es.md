@@ -28,7 +28,7 @@ El objetivo es construir infraestructura para creadores.
 
 <p align="center"><a href="SolarisPKN-AntiCensor/README.es.md"><img src="SolarisPKN-AntiCensor/docs/assets/cover.webp" alt="Portada original de la brujita streamer AntiCensor" width="210"></a></p>
 
-🦊 **[SolarisPKN-AntiCensor](SolarisPKN-AntiCensor/README.es.md)** — Micrófono virtual GPLv3 que genera **Lelele sintético** para juegos compatibles. Detector clásico de voz WebRTC, separación de voz real, manual bilingüe, diagramas SVG y GIF. 🎮🎙️
+🦊 **[SolarisPKN-AntiCensor](SolarisPKN-AntiCensor/README.es.md)** — Nació de los streams de terror en Roblox: los sustos a veces hacen que se escape una puteada, y su creador se cansó de las sanciones y de perder el chat de voz. Este micrófono virtual GPLv3 genera **Lelele sintético** en lugar de enviar las palabras reales al juego, mientras OBS puede conservar la voz original. Incluye VAD clásico WebRTC, guías ES/EN, diagramas SVG y GIF. 🎮🎙️
 
 **Software desarrollado por [SolarisPKN-Labs](https://labs.solarispkn.com.ar/).**
 

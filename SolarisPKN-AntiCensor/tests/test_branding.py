@@ -24,6 +24,21 @@ class BrandingTests(unittest.TestCase):
         self.assertIn("Acerca", t("tab_about", "es"))
         self.assertEqual(t("tab_about", "en"), "💚 About")
 
+    def test_project_origin_is_explained_in_both_languages(self):
+        es = t("about_description", "es").lower()
+        en = t("about_description", "en").lower()
+        for marker in ("roblox", "terror", "sancion", "lelele"):
+            self.assertIn(marker, es)
+        for marker in ("roblox", "horror", "sanction", "lelele"):
+            self.assertIn(marker, en)
+        for filename, keywords in (
+            ("README.es.md", ("puteada", "sancion", "chat de voz", "obs")),
+            ("README.md", ("swear", "sanction", "voice chat", "obs")),
+        ):
+            content = (ROOT / filename).read_text(encoding="utf-8").lower()
+            for keyword in keywords:
+                self.assertIn(keyword, content)
+
     def test_public_docs_and_media(self):
         assert (ROOT/"docs/assets/cover.webp").exists()
         for f in ("README.md","README.es.md","docs/GUIA-DE-USO.es.md",
