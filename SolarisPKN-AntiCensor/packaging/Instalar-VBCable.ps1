@@ -4,6 +4,7 @@
 [CmdletBinding()]
 param(
     [switch] $VerifyOnly,
+    [switch] $Clean,
     [ValidateSet('english','spanish','en','es')]
     [string] $Language = 'spanish'
 )
@@ -51,11 +52,15 @@ function Set-AntiCensorMicName {
     }
 }
 
-if (Get-VBCableDevice) {
+if ($Clean -and !(Get-VBCableDevice)) {
+    Show-Info (L 'No hay VB-CABLE instalado para limpiar.' 'VB-CABLE is not installed; no cleanup is necessary.')
+    exit 0
+}
+if ((Get-VBCableDevice) -and -not $Clean) {
     Write-Host (L "VB-CABLE ya está instalado." "VB-CABLE is already installed.")
     if (-not $VerifyOnly) {
         Set-AntiCensorMicName
-        Show-Info (L "VB-CABLE ya está instalado; AntiCensor intentó nombrar el micrófono como SolarisPKN-Mic Lelele." "VB-CABLE is already installed; AntiCensor checked the SolarisPKN-Mic Lelele display name.")
+        Show-Info (L "VB-CABLE ya está instalado. AntiCensor intentó nombrar el micrófono como SolarisPKN-Mic Lelele." "VB-CABLE is installed. AntiCensor checked the SolarisPKN-Mic Lelele display name.")
     }
     exit 0
 }
@@ -78,6 +83,33 @@ if ($CatSig.Status -ne 'Valid' -or
 }
 if ($VerifyOnly) {
     Write-Host (L "OK: archivo intacto, catálogo Microsoft válido." "OK: original package intact, Microsoft-signed catalog valid.")
+    exit 0
+}
+if ($Clean) {
+    # Never force-delete driver entries, run pnputil or reboot. Open the signed
+    # original vendor maintenance utility with explicit two-step confirmation.
+    Add-Type -AssemblyName System.Windows.Forms
+    $question = L (
+        "ADVERTENCIA: limpiar el controlador puede cortar el audio de Roblox, OBS y otras aplicaciones." +
+        [Environment]::NewLine + "Usalo SOLO para resolver errores. La herramienta oficial VB-Audio se abrirá para que elijas Remove Driver." +
+        [Environment]::NewLine + "¿Continuar?"
+    ) (
+        "WARNING: removing this driver can break audio in Roblox, OBS, and other applications." +
+        [Environment]::NewLine + "ONLY use it to troubleshoot errors. The official VB-Audio utility will open and let you choose Remove Driver." +
+        [Environment]::NewLine + "Continue?"
+    )
+    $answer = [System.Windows.Forms.MessageBox]::Show(
+        $question,'SolarisPKN AntiCensor - VB-CABLE',
+        [System.Windows.Forms.MessageBoxButtons]::YesNo,
+        [System.Windows.Forms.MessageBoxIcon]::Warning)
+    if ($answer -ne [System.Windows.Forms.DialogResult]::Yes) { exit 0 }
+    try {
+        Start-Process -FilePath $Setup -Verb RunAs -WorkingDirectory $TempDir -Wait | Out-Null
+        Show-Info (L "Si quitaste el driver, reiniciá Windows antes de reinstalarlo." "If you removed the driver, restart Windows before reinstalling it.")
+    } catch {
+        Show-Info $_.Exception.Message
+        exit 2
+    }
     exit 0
 }
 Show-Info (L (

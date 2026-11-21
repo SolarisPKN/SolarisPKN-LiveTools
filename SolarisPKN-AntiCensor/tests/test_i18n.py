@@ -42,8 +42,8 @@ class I18nTests(unittest.TestCase):
         self.assertIn("calibration", t("tab_calibration", "en").lower())
         self.assertIn("Calibración", t("tab_calibration", "es"))
         self.assertIn("check", t("tray_check", "en").lower())
-        self.assertEqual(t("mode_Pitidos", "en"), "Beeps")
-        self.assertEqual(t("mode_Ruido", "en"), "Noise")
+        self.assertIn("LELELE", t("only_lelele", "en"))
+        self.assertIn("5 SECONDS", t("cal_begin", "en"))
 
 
 if __name__ == "__main__":

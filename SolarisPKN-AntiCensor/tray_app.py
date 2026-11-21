@@ -22,7 +22,7 @@ import pystray
 
 from mic import SolarisMic
 from vbcable_backend import find_cable_pair
-from updater import UpdateChecker, UpdateResult
+from updater import UpdateChecker, UpdateResult, auto_enabled, pending_update
 from version import APP_NAME, APP_VERSION
 
 
@@ -60,7 +60,7 @@ class TrayAntiCensor:
                 pystray.MenuItem(lambda item: self.app.T("tray_cal"), self.enqueue_calibration),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(lambda item: self.app.T("tray_check"), self.enqueue_check),
-                pystray.MenuItem(lambda item: self.app.T("tray_repo"), self.enqueue_repo),
+                pystray.MenuItem(lambda item: self.app.T("tray_settings"), self.enqueue_settings),
                 pystray.MenuItem(lambda item: self.app.T("tray_release"), self.enqueue_release,
                                  enabled=lambda _: bool(self.latest and self.latest.release_url)),
                 pystray.Menu.SEPARATOR,
@@ -68,6 +68,7 @@ class TrayAntiCensor:
             ),
         )
         self.app.on_language_changed = lambda _language: self.icon.update_menu()
+        self.app.on_check_updates = lambda: self.start_check(manual=True)
 
     def enqueue_open(self, _icon=None, _item=None):
         self.queue.put(("show", None))
@@ -78,8 +79,8 @@ class TrayAntiCensor:
     def enqueue_check(self, _icon=None, _item=None):
         self.queue.put(("manual_check", None))
 
-    def enqueue_repo(self, _icon=None, _item=None):
-        self.queue.put(("repo", None))
+    def enqueue_settings(self, _icon=None, _item=None):
+        self.queue.put(("settings", None))
 
     def enqueue_release(self, _icon=None, _item=None):
         self.queue.put(("open_release", None))
@@ -116,15 +117,35 @@ class TrayAntiCensor:
             self.queue.put(("update_result", (result, manual)))
         threading.Thread(target=background, daemon=True).start()
 
+    def stage_release(self, result: UpdateResult, automatic: bool):
+        self.app.update_status.configure(text=self.app.T("update_downloading"))
+        def background():
+            try:
+                downloaded = self.updater.stage(result, automatic=automatic)
+            except Exception as exc:
+                downloaded = UpdateResult("download_error",
+                    self.app.T("update_download_error", error=exc))
+            self.queue.put(("download_result", downloaded))
+        threading.Thread(target=background, daemon=True).start()
+
+    def handle_download(self, result: UpdateResult):
+        self.app.update_status.configure(text=result.message)
+        if result.status == "ready":
+            self._notify(self.app.T("update_title"), result.message)
+        elif result.status not in ("disabled", "busy"):
+            self._notify(self.app.T("update_dialog"), result.message)
+
     def handle_update(self, result: UpdateResult, manual: bool):
+        self.app.update_status.configure(text=result.message)
         if result.status == "available":
             self.latest = result
-            self._notify(self.app.T("update_title"), result.message)
             self.icon.update_menu()
             if manual:
                 if messagebox.askyesno(self.app.T("update_dialog"),
-                                      self.app.T("update_question", message=result.message)):
-                    self.open_release()
+                        self.app.T("update_manual_download", message=result.message)):
+                    self.stage_release(result, automatic=False)
+            elif auto_enabled():
+                self.stage_release(result, automatic=True)
         elif manual:
             messagebox.showinfo(self.app.T("update_dialog"), result.message)
 
@@ -133,26 +154,6 @@ class TrayAntiCensor:
             return
         # URL HTTPS validada por Updater; no ejecutar archivos descargados.
         webbrowser.open(self.latest.release_url)
-
-    def configure_repository(self):
-        self.show()
-        current = self.updater.repository()
-        new = simpledialog.askstring(
-            self.app.T("repo_title"),
-            self.app.T("repo_question"),
-            initialvalue=current,
-            parent=self.window,
-        )
-        if new is None:
-            return
-        try:
-            self.updater.set_repository(new)
-            self.latest = None
-            self.icon.update_menu()
-            self._notify(self.app.T("repo_updated"), self.updater.repository())
-            self.start_check(manual=True)
-        except (OSError, ValueError) as exc:
-            messagebox.showerror(self.app.T("repo_invalid"), str(exc), parent=self.window)
 
     def poll(self):
         if self.closed:
@@ -166,12 +167,14 @@ class TrayAntiCensor:
                     self.show(self.app.cal_tab)
                 elif cmd == "manual_check":
                     self.start_check(manual=True)
-                elif cmd == "repo":
-                    self.configure_repository()
+                elif cmd == "settings":
+                    self.show(self.app.settings_tab)
                 elif cmd == "open_release":
                     self.open_release()
                 elif cmd == "update_result":
                     self.handle_update(*data)
+                elif cmd == "download_result":
+                    self.handle_download(data)
                 elif cmd == "rename_result":
                     self.handle_rename(data)
                 elif cmd == "exit":
@@ -252,7 +255,7 @@ class TrayAntiCensor:
     def periodic_check(self):
         if self.closed:
             return
-        if self.updater.due():
+        if auto_enabled() and not pending_update() and self.updater.due():
             self.start_check(manual=False)
         self.window.after(60 * 60 * 1000, self.periodic_check)
 
@@ -268,6 +271,22 @@ class TrayAntiCensor:
             self.app.close()
         except tk.TclError:
             self.window.destroy()
+        # Install only AFTER this process exits. Never interrupt a stream.
+        if pending_update():
+            helper = os.path.join(os.path.dirname(sys.executable) if
+                getattr(sys, "frozen", False) else os.path.dirname(__file__),
+                "scripts" if getattr(sys, "frozen", False) else "packaging",
+                "Apply-PendingUpdate.ps1")
+            if os.path.isfile(helper):
+                try:
+                    subprocess.Popen([
+                        os.path.join(os.environ.get("SystemRoot", r"C:\Windows"),
+                                     "System32", "WindowsPowerShell", "v1.0", "powershell.exe"),
+                        "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                        "-File", helper, "-ParentPid", str(os.getpid())
+                    ], creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                except OSError:
+                    pass
 
     def run(self):
         self.window.after(100, self.poll)

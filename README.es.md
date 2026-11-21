@@ -41,7 +41,7 @@ Los primeros módulos públicos están enfocados en la integración entre Stream
 * [Video Publisher](PublisherSuite/VideoPublisher/README.es.md): un video largo y un short vertical, editor local, cola serial, límite diario y adaptadores oficiales.
 
 * [**MultiChat**](MultiChat/README.es.md): recolector de chats multistream en Go sin navegador por plataforma, visor unificado local/OBS, ingesta local autenticada y memoria acotada. MVP: Twitch, YouTube Live y Rumble; pendientes pruebas con cuentas reales.
-* [**AntiCensor / SolarisPKN-Mic Lelele**](AntiCensor/README.es.md): micrófono sintético GPLv3 para Windows controlado por la intensidad de la voz, configuración y bandeja ES/EN, complemento externo VB-CABLE y actualizaciones semanales. Vista previa: falta probar el audio real en Roblox.
+* [**SolarisPKN-AntiCensor / SolarisPKN-Mic Lelele**](SolarisPKN-AntiCensor/README.es.md): micrófono virtual GPLv3 con modo oscuro Solaris Tray, calibración de 5 segundos por etapa, LELELE exclusivo, mantenimiento contextual de VB-CABLE y actualizaciones semanales optativas instaladas solo al salir o iniciar Windows.
 
 ## 🔮 Hoja de Ruta
 

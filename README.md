@@ -41,7 +41,7 @@ The first public modules focus on integration between StreamElements and Streame
 * [Video Publisher](PublisherSuite/VideoPublisher/README.md): one long video plus one vertical short, local review, serial publishing queue, and official API adapters.
 
 * [**MultiChat**](MultiChat/README.md): lightweight multi-platform live-chat collector (Go, no browser per platform), local unified chat/OBS view, authenticated local ingest and bounded memory. MVP: Twitch, YouTube Live and Rumble adapters; real-account testing remains pending.
-* [**AntiCensor / SolarisPKN-Mic Lelele**](AntiCensor/README.md): GPLv3 Windows synthetic microphone driven by voice intensity, bilingual ES/EN settings and tray, VB-CABLE external dependency and module-scoped weekly updates. Preview: Roblox end-to-end audio testing is pending.
+* [**SolarisPKN-AntiCensor / SolarisPKN-Mic Lelele**](SolarisPKN-AntiCensor/README.md): GPLv3 virtual microphone with Solaris Tray dark mode, five-second guided calibration, Lelele-only output, contextual VB-CABLE maintenance and opt-in weekly updates that only install after exit or Windows login.
 
 ## 🔮 Future Roadmap
 

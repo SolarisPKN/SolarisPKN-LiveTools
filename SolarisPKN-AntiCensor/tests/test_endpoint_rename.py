@@ -21,7 +21,7 @@ SCRIPT = os.path.join(ROOT, "packaging", "Renombrar-Mic.ps1")
 
 class RenameTests(unittest.TestCase):
     def test_program_version_and_installer_hook(self):
-        self.assertEqual(APP_VERSION, "0.7.1")
+        self.assertEqual(APP_VERSION, "0.8.0")
         with open(os.path.join(ROOT, "packaging", "AntiCensor.iss"), encoding="utf-8") as f:
             installer = f.read()
         self.assertIn('Source: "{#ProjectRoot}\\packaging\\Renombrar-Mic.ps1"', installer)

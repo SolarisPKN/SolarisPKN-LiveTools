@@ -18,6 +18,11 @@ import time
 import webbrowser
 import tkinter as tk
 from tkinter import ttk, messagebox
+import subprocess
+import sys
+from theme import apply_dark, BG
+from version import APP_VERSION
+from updater import auto_enabled, set_auto_enabled
 
 import numpy as np
 import sounddevice as sd
@@ -33,10 +38,10 @@ PRODUCT_NAME = "SolarisPKN AntiCensor"
 
 # Tiempo de preparación y medición por etapa. El usuario ve un contador.
 STAGES = {
-    "noise": ("stage_noise", 1.3, 1.8),
-    "whisper": ("stage_whisper", 1.4, 3.0),
-    "normal": ("stage_normal", 1.4, 3.0),
-    "shout": ("stage_shout", 1.4, 2.6),
+    "noise": ("stage_noise", 0.0, 5.0),
+    "whisper": ("stage_whisper", 0.0, 5.0),
+    "normal": ("stage_normal", 0.0, 5.0),
+    "shout": ("stage_shout", 0.0, 5.0),
 }
 
 
@@ -88,12 +93,13 @@ def save_settings(settings: dict) -> None:
 class SolarisMic:
     def __init__(self, root):
         self.root = root
+        apply_dark(root)
         self.language = get_language()
         self._localized_widgets = []
         self.on_language_changed = None
-        root.title(self.T("app_title", version="0.7.1"))
-        root.geometry("770x675")
-        root.minsize(680, 570)
+        root.title(self.T("app_title", version=APP_VERSION))
+        root.geometry("830x730")
+        root.minsize(710, 640)
 
         self.active = False
         self.stream = None
@@ -121,18 +127,18 @@ class SolarisMic:
         self.cal_step_ready = 0.0
         self.cal_step_end = 0.0
         self.cal_results: dict[str, float] = {}
+        self.cal_running = False
+        self.on_check_updates = None
+        self.auto_updates = tk.BooleanVar(value=auto_enabled())
 
-        self.mode = tk.StringVar(value="Lelele")
         self.threshold = tk.DoubleVar(value=-44)
         self.volume = tk.DoubleVar(value=100)
         self.response = tk.DoubleVar(value=65)
         self.include_shout = tk.BooleanVar(value=False)
-        self.mode_value = "Lelele"
         self.threshold_value = -44.0
         self.volume_value = 100.0
         self.response_value = 65.0
         # El hilo PortAudio jamás invoca métodos Tk: valores cacheados simples.
-        self.mode.trace_add("write", lambda *_: setattr(self, "mode_value", self.mode_key(self.mode.get())))
         self.threshold.trace_add("write", lambda *_: setattr(self, "threshold_value", float(self.threshold.get())))
         self.volume.trace_add("write", lambda *_: setattr(self, "volume_value", float(self.volume.get())))
         self.response.trace_add("write", lambda *_: setattr(self, "response_value", float(self.response.get())))
@@ -141,11 +147,14 @@ class SolarisMic:
         tabs.pack(fill="both", expand=True, padx=10, pady=10)
         main = ttk.Frame(tabs, padding=15)
         calibration = ttk.Frame(tabs, padding=15)
+        settings = ttk.Frame(tabs, padding=15)
         tabs.add(main, text=self.T("tab_audio"))
         tabs.add(calibration, text=self.T("tab_calibration"))
+        tabs.add(settings, text=self.T("tab_settings"))
         self.tabs = tabs
         self.main_tab = main
         self.cal_tab = calibration
+        self.settings_tab = settings
 
         header = ttk.Frame(main)
         header.pack(fill="x")
@@ -164,23 +173,23 @@ class SolarisMic:
         self.dependency_status.pack(anchor="w")
         self.btn_vendor = self._button_key(main, "vendor_install", self.open_vbcable_website)
         self.btn_vendor.pack(anchor="w", pady=(3, 10))
+        self.btn_clean = self._button_key(main, "driver_clean", self.clean_driver)
+        # Only one of these two buttons may be visible.
+        self.btn_clean.pack_forget()
         self._label_key(main, "reference_mic").pack(anchor="w")
         self.in_selector = ttk.Combobox(main, state="readonly", width=79)
         self.in_selector.pack(fill="x", pady=(4, 6))
         self.in_selector.bind("<<ComboboxSelected>>", self.source_changed)
         self.btn_refresh = self._button_key(main, "refresh_devices", self.refresh)
         self.btn_refresh.pack(anchor="w", pady=(0, 8))
-        self._label_key(main, "synthetic_mode").pack(anchor="w", pady=(4, 3))
-        self.mode_combo = ttk.Combobox(main, state="readonly", textvariable=self.mode,
-                                      values=self.mode_choices())
-        self.mode_combo.pack(anchor="w")
+        self._label_key(main, "only_lelele", font=("Segoe UI Semibold", 12)).pack(anchor="w", pady=(4, 5))
         self.manual_row = ttk.Frame(main)
         self.manual_row.pack(fill="x")
         self.slider(self.manual_row, "manual_threshold", self.threshold, -70, -15)
         self.slider(main, "volume", self.volume, 0, 100)
         self.slider(main, "response", self.response, 0, 100)
         self._label_key(main, "intensity").pack(anchor="w", pady=(8, 3))
-        self.meter = tk.Canvas(main, height=26, bg="#171b20", highlightthickness=0)
+        self.meter = tk.Canvas(main, height=26, bg=BG, highlightthickness=0)
         self.meter.pack(fill="x")
         self.meter_segments = []
         for i in range(50):
@@ -213,6 +222,12 @@ class SolarisMic:
         self._label_key(calibration, "shout_explanation", wraplength=660).pack(anchor="w", pady=(4, 14))
         self.btn_cal = self._button_key(calibration, "cal_start", self.start_calibration)
         self.btn_cal.pack(fill="x", pady=(1, 5))
+        nav = ttk.Frame(calibration)
+        nav.pack(fill="x", pady=(0, 8))
+        self.btn_cal_prev = self._button_key(nav, "cal_previous", self.previous_stage, state="disabled")
+        self.btn_cal_prev.pack(side="left", fill="x", expand=True)
+        self.btn_cal_next = self._button_key(nav, "cal_next", self.next_stage, state="disabled")
+        self.btn_cal_next.pack(side="left", fill="x", expand=True, padx=(8, 0))
         self.btn_cal_cancel = self._button_key(calibration, "cal_cancel",
                                                self.cancel_calibration, state="disabled")
         self.btn_cal_cancel.pack(fill="x", pady=(0, 15))
@@ -228,6 +243,22 @@ class SolarisMic:
         self.cal_summary.pack(anchor="w", pady=(6, 15))
         self.btn_clear_cal = self._button_key(calibration, "cal_clear", self.clear_calibration)
         self.btn_clear_cal.pack(anchor="w", pady=(0, 3))
+
+        # Updates and dependencies have their own Settings tab.
+        self._label_key(settings, "settings_header", font=("Segoe UI Semibold", 16)).pack(anchor="w", pady=(3, 14))
+        self._label_key(settings, "repo_fixed", wraplength=680).pack(anchor="w", pady=(2, 15))
+        self.auto_box = ttk.Checkbutton(settings, variable=self.auto_updates,
+                                         text=self.T("auto_updates"), command=self.set_auto_updates)
+        self._localized_widgets.append((self.auto_box, "auto_updates"))
+        self.auto_box.pack(anchor="w", pady=5)
+        self._label_key(settings, "auto_description", wraplength=680).pack(anchor="w", pady=(0, 14))
+        self.btn_check_updates = self._button_key(settings, "update_check_button", self.check_updates_now)
+        self.btn_check_updates.pack(anchor="w", pady=(0, 9))
+        self.update_status = self._label_key(settings, "update_idle", wraplength=680)
+        self.update_status.pack(anchor="w", pady=(3, 12))
+        self._label_key(settings, "driver_section", font=("Segoe UI Semibold", 12)).pack(anchor="w", pady=(12, 5))
+        self.settings_driver = self._label_key(settings, "dependency_checking", wraplength=680)
+        self.settings_driver.pack(anchor="w")
 
         self.apply_language()
         self.refresh()
@@ -247,14 +278,39 @@ class SolarisMic:
         self._localized_widgets.append((widget, key))
         return widget
 
-    def mode_choices(self):
-        return [self.T("mode_" + key) for key in ("Lelele", "Robot", "Pitidos", "Ruido")]
+    def set_auto_updates(self):
+        set_auto_enabled(self.auto_updates.get())
+        self.update_status.configure(text=self.T("auto_on" if self.auto_updates.get() else "auto_off"))
 
-    def mode_key(self, display):
-        for key in ("Lelele", "Robot", "Pitidos", "Ruido"):
-            if display in (t("mode_" + key, "es"), t("mode_" + key, "en")):
-                return key
-        return getattr(self, "mode_value", "Lelele")
+    def check_updates_now(self):
+        if self.on_check_updates is not None:
+            self.on_check_updates()
+        else:
+            self.update_status.configure(text=self.T("update_manual_requires_tray"))
+
+    def clean_driver(self):
+        if self.active or self.calibrating:
+            messagebox.showwarning(self.T("driver_clean"), self.T("driver_clean_in_use"))
+            return
+        if not messagebox.askyesno(self.T("driver_clean"), self.T("driver_clean_warning")):
+            return
+        base = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(__file__)
+        helper = os.path.join(base, "scripts", "Instalar-VBCable.ps1")
+        if not os.path.isfile(helper):
+            helper = os.path.join(base, "packaging", "Instalar-VBCable.ps1")
+        if not os.path.isfile(helper):
+            messagebox.showerror(self.T("driver_clean"), self.T("driver_clean_missing"))
+            return
+        try:
+            subprocess.Popen(
+                [os.path.join(os.environ.get("SystemRoot", r"C:\Windows"),
+                              "System32", "WindowsPowerShell", "v1.0", "powershell.exe"),
+                 "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", helper,
+                 "-Clean", "-Language", self.language],
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+        except OSError as exc:
+            messagebox.showerror(self.T("driver_clean"), str(exc))
 
     def change_language(self, _event=None):
         chosen = self.language_selector.get()
@@ -272,26 +328,25 @@ class SolarisMic:
             callback(lang)
 
     def apply_language(self):
-        self.root.title(self.T("app_title", version="0.6.0"))
+        self.root.title(self.T("app_title", version=APP_VERSION))
         self.tabs.tab(self.main_tab, text=self.T("tab_audio"))
         self.tabs.tab(self.cal_tab, text=self.T("tab_calibration"))
+        self.tabs.tab(self.settings_tab, text=self.T("tab_settings"))
         for widget, key in self._localized_widgets:
             widget.configure(text=self.T(key))
-        current_mode = self.mode_value
-        self.mode_combo.configure(values=self.mode_choices())
-        self.mode.set(self.T("mode_" + current_mode))
         self.language_selector.set(LANGUAGES[self.language])
-        if getattr(self, "cable_mic_name", None):
-            self.dependency_status.configure(text=self.T("dependency_found",
-                                                       name=self.cable_mic_name))
-        else:
-            self.dependency_status.configure(text=self.T("dependency_missing"))
+        self._show_dependency(bool(getattr(self, "cable_mic_name", None)))
         try:
             _, device, _ = self.selected_device()
             self.cal_source.configure(text=self.T("selected_source", device=device))
         except (RuntimeError, AttributeError):
             pass
         self.update_profile_info()
+        if self.calibrating:
+            self.btn_cal.configure(text=self.T(
+                "cal_repeat" if self.cal_step_name in self.cal_results else "cal_begin"))
+            self.btn_cal_next.configure(text=self.T(
+                "cal_finish" if self.cal_step_idx == len(self.cal_steps) - 1 else "cal_next"))
         if self.active:
             self.status.configure(text=self.T("active_status",
                                  device=self.cable_mic_name or "CABLE Output"))
@@ -364,10 +419,23 @@ class SolarisMic:
             self.source_changed()
             pair = find_cable_pair()
             self.cable_mic_name = pair[1] if pair else None
-            self.dependency_status.configure(text=(self.T("dependency_found", name=pair[1]) if pair
-                                                else self.T("dependency_missing")))
+            self._show_dependency(bool(pair))
         except Exception as exc:
             self.status.configure(text=self.T("device_enumeration_failed", error=exc))
+
+    def _show_dependency(self, present: bool):
+        key = "dependency_found" if present else "dependency_missing"
+        text = self.T(key, name=self.cable_mic_name) if present else self.T(key)
+        self.dependency_status.configure(text=text)
+        self.settings_driver.configure(text=text)
+        if present:
+            self.btn_vendor.pack_forget()
+            if not self.btn_clean.winfo_manager():
+                self.btn_clean.pack(anchor="w", pady=(3, 10))
+        else:
+            self.btn_clean.pack_forget()
+            if not self.btn_vendor.winfo_manager():
+                self.btn_vendor.pack(anchor="w", pady=(3, 10))
 
     def selected_source_key(self):
         if hasattr(self, "in_selector"):
@@ -474,7 +542,11 @@ class SolarisMic:
                     self.cal_samples.append(self.level_db)
 
     def start_calibration(self):
-        if self.active or self.calibrating:
+        """Start the first, 5-second SILENCE stage explicitly on user click."""
+        if self.active:
+            return
+        if self.calibrating:
+            self.repeat_stage()
             return
         try:
             device_index, _, _ = self.selected_device()
@@ -483,11 +555,11 @@ class SolarisMic:
                 self.cal_steps.append("shout")
             self.cal_results = {}
             self.calibrating = True
-            self._prepare_step(0)
+            self.cal_running = False
             self.cal_stream = self.open_reference_stream(device_index, self.capture)
             self.cal_stream.start()
         except Exception as exc:
-            self.cancel_calibration()
+            self.cancel_calibration(silent=True)
             messagebox.showerror(self.T("tab_calibration"), self.T("recording_failed", error=exc))
             return
         self.in_selector.configure(state="disabled")
@@ -495,41 +567,88 @@ class SolarisMic:
         self.btn_on.configure(state="disabled")
         self.btn_clear_cal.configure(state="disabled")
         self.chk_shout.configure(state="disabled")
-        self.btn_cal.configure(state="disabled")
         self.btn_cal_cancel.configure(state="normal")
         self.tabs.select(self.cal_tab)
-        self.cal_status.configure(text=self.T("cal_recording"))
+        self._prepare_step(0, run=True)
 
-    def _prepare_step(self, index: int):
+    def _prepare_step(self, index: int, *, run: bool = False):
+        """Arm a stage; it only records for 5 seconds after a button press."""
         name = self.cal_steps[index]
-        label, prep, record = STAGES[name]
+        label, _prep, seconds = STAGES[name]
+        self.cal_step_idx = index
+        self.cal_step_name = name
+        self.cal_running = run
         now = time.monotonic()
         with self.cal_lock:
-            self.cal_step_idx = index
-            self.cal_step_name = name
-            self.cal_step_ready = now + prep
-            self.cal_step_end = now + prep + record
+            self.cal_step_ready = now if run else float("inf")
+            self.cal_step_end = now + seconds if run else float("inf")
             self.cal_samples = []
-        self.cal_stage_label.configure(text=self.T("cal_step", step=index+1, total=len(self.cal_steps), description=self.T(label)))
+        self.cal_stage_label.configure(text=self.T(
+            "cal_step", step=index + 1, total=len(self.cal_steps),
+            description=self.T(label)))
+        self.cal_progress["value"] = 0
+        self.btn_cal.configure(
+            text=self.T("cal_repeat" if name in self.cal_results else "cal_begin"),
+            state="disabled" if run else "normal")
+        self.btn_cal_prev.configure(state="disabled" if run or index == 0 else "normal")
+        self.btn_cal_next.configure(
+            text=self.T("cal_finish" if index == len(self.cal_steps)-1 else "cal_next"),
+            state="normal" if not run and name in self.cal_results else "disabled")
+        self.cal_status.configure(
+            text=self.T("cal_record_timer", seconds=seconds, db=self.level_db)
+            if run else self.T("cal_stage_waiting", seconds=seconds))
+
+    def repeat_stage(self):
+        if not self.calibrating or self.cal_running:
+            return
+        self._prepare_step(self.cal_step_idx, run=True)
+
+    def previous_stage(self):
+        if not self.calibrating or self.cal_running or self.cal_step_idx == 0:
+            return
+        self._prepare_step(self.cal_step_idx-1)
+
+    def next_stage(self):
+        if not self.calibrating or self.cal_running:
+            return
+        if self.cal_step_name not in self.cal_results:
+            return
+        nxt = self.cal_step_idx + 1
+        if nxt < len(self.cal_steps):
+            self._prepare_step(nxt)
+            return
+        self._complete_calibration()
 
     def _finish_step(self):
+        """Freeze RMS measurements, then WAIT for next user click."""
+        if not self.calibrating or not self.cal_running:
+            return
         name = self.cal_step_name
         with self.cal_lock:
             samples = self.cal_samples[:]
             self.cal_samples = []
-            # Evitar mezclar nuevas mediciones mientras la UI evalúa.
             self.cal_step_ready = float("inf")
             self.cal_step_end = float("inf")
+        self.cal_running = False
         try:
             self.cal_results[name] = sample_stage(name, samples)
         except ValueError as exc:
-            self.cancel_calibration()
-            messagebox.showwarning(self.T("cal_incomplete"), self.T("cal_retry", error=exc))
+            self.cal_results.pop(name, None)
+            self.btn_cal.configure(state="normal", text=self.T("cal_repeat"))
+            self.btn_cal_prev.configure(
+                state="normal" if self.cal_step_idx > 0 else "disabled")
+            self.btn_cal_next.configure(state="disabled")
+            self.cal_status.configure(text=self.T("cal_retry", error=exc))
             return
-        next_index = self.cal_step_idx + 1
-        if next_index < len(self.cal_steps):
-            self._prepare_step(next_index)
-            return
+        self.cal_progress["value"] = 100
+        self.btn_cal.configure(state="normal", text=self.T("cal_repeat"))
+        self.btn_cal_prev.configure(
+            state="normal" if self.cal_step_idx > 0 else "disabled")
+        self.btn_cal_next.configure(state="normal")
+        self.cal_status.configure(text=self.T(
+            "cal_stage_done", db=self.cal_results[name], seconds=STAGES[name][2]))
+
+    def _complete_calibration(self):
         try:
             result = CalibrationProfile.from_measurements(
                 noise_db=self.cal_results["noise"],
@@ -537,8 +656,7 @@ class SolarisMic:
                 normal_db=self.cal_results["normal"],
                 shout_db=self.cal_results.get("shout"),
             )
-        except ValueError as exc:
-            self.cancel_calibration()
+        except (KeyError, ValueError) as exc:
             messagebox.showwarning(self.T("cal_bad"), self.T("cal_retry", error=exc))
             return
         self.cancel_calibration(silent=True)
@@ -560,18 +678,19 @@ class SolarisMic:
 
     def cancel_calibration(self, silent=False):
         self.calibrating = False
+        self.cal_running = False
         with self.cal_lock:
             self.cal_step_ready = float("inf")
             self.cal_step_end = float("inf")
             self.cal_samples = []
         if self.cal_stream is not None:
-            s, self.cal_stream = self.cal_stream, None
+            stream, self.cal_stream = self.cal_stream, None
             try:
-                s.stop()
+                stream.stop()
             except Exception:
                 pass
             try:
-                s.close()
+                stream.close()
             except Exception:
                 pass
         self.in_selector.configure(state="readonly")
@@ -579,14 +698,16 @@ class SolarisMic:
         self.btn_clear_cal.configure(state="normal")
         self.chk_shout.configure(state="normal")
         self.btn_on.configure(state="normal")
-        self.btn_cal.configure(state="normal")
+        self.btn_cal.configure(state="normal", text=self.T("cal_start"))
         self.btn_cal_cancel.configure(state="disabled")
+        self.btn_cal_prev.configure(state="disabled")
+        self.btn_cal_next.configure(state="disabled")
         if not silent:
             self.cal_status.configure(text=self.T("cal_cancelled"))
             self.cal_progress["value"] = 0
 
     def render(self):
-        """Generar Lelele / Robot / Pitidos / Ruido, PCM 48k stereo signed int32."""
+        """Generate Lelele only, PCM 48k stereo signed int32."""
         target = self.target if time.monotonic() - self.last_input < .4 else 0.0
         speed = self.response_value / 100
         alpha = math.exp(-.010 / (.025 + (1 - speed) * .14))
@@ -595,18 +716,10 @@ class SolarisMic:
         self.outlevel = end
         t = (self.pos + np.arange(BLOCK)) / RATE
         self.pos += BLOCK
-        mode = self.mode_value
-        if mode == "Lelele":
-            phase = 2 * np.pi * (165 * t - 1.5 * np.cos(2 * np.pi * 2.1 * t))
-            wave = (.64 * np.sin(phase) + .27 * np.sin(2 * phase + .4)) * (
-                .25 + .75 * np.maximum(0, np.sin(2 * np.pi * 6 * t)))
-        elif mode == "Robot":
-            wave = np.sin(2 * np.pi * (215 * t + 1.4 * np.sin(2 * np.pi * 8 * t))) * (
-                .3 + .7 * (np.sin(2 * np.pi * 12 * t) > 0))
-        elif mode == "Pitidos":
-            wave = np.sin(2 * np.pi * 660 * t) * (np.sin(2 * np.pi * 5 * t) > -0.1)
-        else:
-            wave = self.rng.normal(0, .35, BLOCK)
+        # Only Lelele. No robot, beeps, noise or alternate audio modes.
+        phase = 2 * np.pi * (165 * t - 1.5 * np.cos(2 * np.pi * 2.1 * t))
+        wave = (.64 * np.sin(phase) + .27 * np.sin(2 * phase + .4)) * (
+            .25 + .75 * np.maximum(0, np.sin(2 * np.pi * 6 * t)))
         samples = np.clip(wave * amplitude * self.volume_value / 100, -.88, .88)
         pcm = np.rint(samples * 2147483647).astype("<i4")
         return np.repeat(pcm[:, None], 2, axis=1).tobytes()
@@ -722,19 +835,14 @@ class SolarisMic:
             self._draw_meter(signal)
             color = self.T("red") if signal >= 85 else (self.T("yellow") if signal >= 60 else self.T("green"))
             self.readout.configure(text=self.T("meter_readout", db=self.level_db, percent=signal, color=color))
-        if self.calibrating:
+        if self.calibrating and self.cal_running:
             now = time.monotonic()
-            _, prep, rec = STAGES[self.cal_step_name]
-            if now < self.cal_step_ready:
-                self.cal_status.configure(
-                    text=self.T("cal_prepare_timer", seconds=max(0, self.cal_step_ready - now))
-                )
-            elif now < self.cal_step_end:
-                self.cal_status.configure(
-                    text=self.T("cal_record_timer", seconds=max(0, self.cal_step_end - now), db=self.level_db)
-                )
+            _, _, seconds = STAGES[self.cal_step_name]
+            remaining = max(0.0, self.cal_step_end - now)
+            self.cal_status.configure(text=self.T("cal_record_timer",
+                                                  seconds=remaining, db=self.level_db))
             self.cal_progress["value"] = max(0.0, min(100.0,
-                ((now - (self.cal_step_ready - prep)) / (prep + rec)) * 100.0))
+                (1 - remaining / seconds) * 100.0))
             if now >= self.cal_step_end:
                 self._finish_step()
         if self.active and self.error:

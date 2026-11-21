@@ -17,7 +17,7 @@ root.withdraw()
 try:
     app = SolarisMic(root)
     root.update_idletasks()
-    assert app.tabs.index("end") == 2
+    assert app.tabs.index("end") == 3
     assert app.calibrating is False
     assert app.active is False
     print("GUI_OK", root.title(), "tabs", app.tabs.index("end"),
