@@ -15,8 +15,11 @@ if(-not (Test-Path $builder)) {
     }
 }
 if(-not (Test-Path $py)){throw 'First run INSTALAR.ps1 / Primero ejecutá INSTALAR.ps1.'}
-& $py -m pip show pyinstaller 2>&1 | Out-Null
-if($LASTEXITCODE -ne 0) {
+# pip show emits a warning on stderr when absent; PowerShell in CI can treat
+# that warning as a terminating error. pip list succeeds even if no package exists.
+$packages = & $py -m pip --disable-pip-version-check list --format=freeze
+if($LASTEXITCODE -ne 0){throw 'Could not inspect Python packages.'}
+if(-not (@($packages | Where-Object { $_ -match '^(?i:pyinstaller)==' }).Count -gt 0)) {
     & $py -m pip --disable-pip-version-check install --only-binary=:all: 'pyinstaller==6.22.3'
     if($LASTEXITCODE -ne 0){throw 'Could not install PyInstaller / No se pudo instalar PyInstaller.'}
 }
