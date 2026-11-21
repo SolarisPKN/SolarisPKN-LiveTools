@@ -1,0 +1,23 @@
+# 🚀 SolarisPKN AntiCensor v0.8.5 — Novedades
+🇦🇷 Español · [🇬🇧 English](RELEASE-NOTES.en.md)
+
+### 🎙️ Qué hay de nuevo
+- 🧠 **WebRTC VAD clásico** con nivel 0–3, activado por defecto (2). No hay transcripción de palabras ni LLM.
+- 🖱️ Menos falsas activaciones por clics aislados, con umbral temporal y cola suave.
+- 🎚️ Selección WASAPI sin duplicados de PortAudio, con selección explícita del micrófono.
+- 🛠️ **Modo experto** para consultar endpoints VB-CABLE sin modificar Windows.
+- 🦊 **Portada ilustrada oficial** visible en README y pestaña Acerca de.
+- 💚 **Software desarrollado por SolarisPKN-Labs**, https://labs.solarispkn.com.ar/
+- 🌍 Manuales bilingües, SVG, GIF y ejemplos de uso con Roblox, Gadnic, SteelSeries Sonar, Redragon y OBS.
+- ✅ 61 pruebas automatizadas aprobadas en el entorno de desarrollo.
+
+### ⚠️ Limitaciones
+No hay cancelación de eco avanzada. El cable es compartido y otras apps pueden escribir audio a CABLE Input. Las pruebas en algunos juegos, así como regresiones de rutas específicas, deben repetirse por el usuario.
+
+### 📦 Instalador
+Archivo de compilación local: **SolarisPKN-AntiCensor-Setup-v0.8.5.exe**. Solo anunciamos el asset de descarga cuando efectivamente esté publicado en GitHub Releases.
+
+### 🔐 Seguridad
+No se publican credenciales, IP privadas, diagnósticos del usuario, archivos locales de OBS ni audios capturados.
+
+[📘 Documentación](../README.es.md) · [🌐 SolarisPKN-Labs](https://labs.solarispkn.com.ar/)

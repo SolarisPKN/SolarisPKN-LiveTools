@@ -3,6 +3,17 @@ $ErrorActionPreference='Stop'
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $py=Join-Path $root '.venv\Scripts\python.exe'
 $builder=Join-Path $PSScriptRoot 'tools\InnoSetup6\ISCC.exe'
+if(-not (Test-Path $builder)) {
+    # Reuse a locally installed compiler when available; never bundle its binaries.
+    $candidates=@(
+        'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
+        'C:\Program Files\Inno Setup 6\ISCC.exe',
+        'D:\SolarisPKN-IA\Proyectos-Locales\SolarisPKN-AntiCheat-Mic\packaging\tools\InnoSetup6\ISCC.exe'
+    )
+    foreach($candidate in $candidates) {
+        if(Test-Path -LiteralPath $candidate) { $builder=$candidate; break }
+    }
+}
 if(-not (Test-Path $py)){throw 'First run INSTALAR.ps1 / Primero ejecutá INSTALAR.ps1.'}
 & $py -m pip show pyinstaller 2>&1 | Out-Null
 if($LASTEXITCODE -ne 0) {
@@ -20,6 +31,8 @@ try {
         '--workpath',(Join-Path $PSScriptRoot 'build'),
         '--specpath',$PSScriptRoot,'--paths',$root,
         '--collect-all','sounddevice','--collect-all','pystray',
+        '--hidden-import','webrtcvad','--hidden-import','_webrtcvad',
+        '--add-data',((Join-Path $root 'docs\assets\cover.webp') + ';docs/assets'),
         (Join-Path $root 'tray_app.py'))
     & $py @argsPy
     if($LASTEXITCODE -ne 0){throw 'PyInstaller fallo.'}

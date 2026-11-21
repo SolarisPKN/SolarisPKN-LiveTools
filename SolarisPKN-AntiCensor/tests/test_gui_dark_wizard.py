@@ -42,7 +42,7 @@ class InterfaceTests(unittest.TestCase):
 
     def test_dark_and_only_lelele(self):
         self.assertEqual(self.root.cget("bg"), BG)
-        self.assertEqual(self.app.tabs.index("end"), 3)
+        self.assertEqual(self.app.tabs.index("end"), 4)  # Audio, Calibración, Ajustes, Acerca de
         self.assertFalse(hasattr(self.app, "mode_combo"))
         self.assertFalse(hasattr(self.app, "mode_value"))
 
@@ -59,6 +59,8 @@ class InterfaceTests(unittest.TestCase):
     def test_five_second_calibration_wizard_waits_for_next(self):
         if not self.app.devices:
             self.skipTest("No microphone devices present for fake capture")
+        self.app.in_selector.current(0)
+        self.app.source_changed()
         fake = NoAudioStream()
         self.app.open_reference_stream = lambda _idx, _cb: fake
         self.app.start_calibration()

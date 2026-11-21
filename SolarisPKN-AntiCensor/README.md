@@ -1,47 +1,89 @@
-# 🎙️ SolarisPKN-AntiCensor
+<p align="center"><img src="docs/assets/cover.webp" alt="Official AntiCensor cover: witch streamer, orange fox, gamer microphone and crossed-out BAN symbol" width="390"></p>
+<p align="center"><strong>🎙️ Your voice drives Lelele. The game never receives your original words. 🦊</strong><br>🇬🇧 English · <a href="README.es.md">🇦🇷 Español</a> · <a href="https://labs.solarispkn.com.ar/">💚 SolarisPKN-Labs</a></p>
 
-**English** · [Español](README.es.md) · [Installation guide](README_INSTALADOR.md)
+# 🎤 SolarisPKN-AntiCensor v0.8.5
+**Software developed by [SolarisPKN-Labs](https://labs.solarispkn.com.ar/).**
 
-Official [SolarisPKN-LiveTools](https://github.com/SolarisPKN/SolarisPKN-LiveTools/tree/main/SolarisPKN-AntiCensor) module, a **GPLv3 Windows application** that uses a physical microphone to measure **RMS loudness only**, without routing speech. It outputs **LELELE exclusively**. The original recorded Lelele WAV has not been supplied yet; a local synthesizer is currently used.
+🎮 An experimental virtual microphone for gaming, streaming and roleplay. **Speak into your real mic and AntiCensor generates synthetic Lelele for your game instead of forwarding your real voice.** OBS may independently stream your natural speech to viewers. 💚
 
-**v0.8.2 preview.** Dark UI, guided calibration, update staging and setup are implemented; final end-to-end Roblox testing is still pending.
+🧪 Windows 10/11 x64 preview · 🛠️ GPL-3.0-only · 🌍 Spanish/English · ✅ 61 automated tests passed in development. Tests do not imply universal end-to-end compatibility.
 
-## Features
-- **Mandatory dark mode**, matching Solaris Tray: background #1D1D27, pale text and mint accents.
-- **LELELE only**; Robot, Beeps and Noise modes have been removed.
-- Select a physical reference microphone; green/yellow/red output intensity meter.
-- Persistent **Español / English** settings and tray menu.
-- Three tabs: **Microphone, Calibration, Settings**.
+<p align="center"><img src="docs/assets/voice-gate-demo.gif" width="710" alt="Animated tutorial: noise, probable voice, synthetic Lelele"></p>
 
-## Guided five-second calibration
-1. Click **Start: Silence** and remain silent for 5 seconds.
-2. After the stage completes choose **Repeat**, **Previous**, **Next**, or **Cancel**. It **never advances on its own**.
-3. **Whisper**: explicitly click Start Stage and whisper for 5 seconds (approximately 7.5% output).
-4. **Normal speech**: explicitly click Start Stage and speak for 5 seconds (approximately 50% output).
-5. **Optional shout**: when enabled, add 5 seconds to calibrate 100%. Otherwise, extrapolate the maximum from previous measurements.
+## 🎯 What is it for?
+| Scenario | Result |
+|---|---|
+| 🎮 Roblox and compatible games with a selectable microphone | Game receives synthetic Lelele instead of your actual words |
+| 🎭 Character roleplay and comedy | The character makes a sound in sync with your speaking activity |
+| 📺 OBS / streaming | Viewers can hear your natural voice from a separate source while your game hears Lelele |
+| 🔐 Contextual privacy | AntiCensor does not send original mic PCM to VB-CABLE; separately configured software can still access hardware |
+| 🧪 Audio testing | Inspect devices, calibrate loudness and test classical voice detection |
 
-Only aggregate dBFS levels and per-device profiles are stored, never audio. Repeating one stage does not delete the other stages' measurements.
+<p align="center"><img src="docs/assets/features.en.svg" width="100%" alt="Illustrated AntiCensor features"></p>
 
-## VB-CABLE external dependency
-**VB-CABLE Basic** by **VB-Audio Software / Vincent Burel** is proprietary donationware, **not GPLv3**. Its original Microsoft-signed kernel driver is used unchanged.
-- **If missing**, the installer offers to install VB-CABLE.
-- **If already installed**, Install is hidden; **Clean driver (troubleshooting only)** is offered with a warning and explicit confirmation, launching the vendor maintenance utility, **never silently deleting drivers**.
-- AntiCensor tries to display the recording microphone as **SolarisPKN-Mic Lelele** by changing the Windows endpoint label, not the signed driver. Some apps may still show **CABLE Output**.
-- Synthetic Lelele goes to **CABLE Input** for playback and applications capture the corresponding recording endpoint.
-- Uninstalling AntiCensor does not uninstall VB-CABLE.
+## ⚙️ How it works
+<p align="center"><img src="docs/assets/audio-flow.en.svg" width="100%" alt="Signal diagram: physical mic, voice activity gate, Lelele, virtual cable, game"></p>
 
-Vendor website: https://vb-audio.com/Cable/ · License terms: https://vb-audio.com/Services/licensing.htm
+1. 🎤 Explicitly select your **physical microphone**.
+2. 🧠 **Classical WebRTC VAD** analyzes temporary 20-ms frames for probable speech; no word transcription, generative LLM or GPU required.
+3. 🎚️ Calibration maps speech loudness to synthesizer amplitude.
+4. 🤖 AntiCensor creates **new Lelele waveforms** instead of copying your real speech.
+5. 🔌 AntiCensor plays to <code>CABLE Input</code> (VB-CABLE playback). Games capture from <code>CABLE Output</code>, optionally renamed <code>SolarisPKN-Mic Lelele</code> (recording).
 
-## Updates — only when closed or next Windows sign-in
-The fixed source path is **SolarisPKN/SolarisPKN-LiveTools/SolarisPKN-AntiCensor**. The GitHub repository is SolarisPKN/SolarisPKN-LiveTools and the module release tags are **solarispkn-anticensor-vX.Y.Z** (legacy anticensor-vX.Y.Z also accepted). The installer asset name is **SolarisPKN-AntiCensor-Setup-vX.Y.Z.exe**.
-- Opt in via the **Automatic weekly updates** checkbox in Settings. Once every seven days it downloads and verifies the official installer when a Release with SHA-256 exists.
-- When disabled, use the **Check for updates now** button and manually approve any download.
-- Installation is **deferred until AntiCensor has closed**, or until the next Windows sign-in before the app starts. The update helper never interrupts a stream, closes another application or restarts Windows.
-- No GitHub Release with a verifiable installer means **no download and no execution**. The repository cannot be configured to an external source.
+⚠️ **Important:** VB-CABLE is shared. Other apps can inject audio through CABLE Input. Expert Mode is a UI visibility control, NOT a way to disable Windows endpoints. VAD is not acoustic echo cancellation: leaked music, traffic or game voices can still cause false triggers.
 
-**Verified on Windows:** Windows rejected direct Core Audio property writes with `E_ACCESSDENIED`, so AntiCensor now uses the built-in Windows Sound Properties dialog automatically from the interactive user session. The device was successfully renamed to **SolarisPKN-Mic Lelele (VB-Audio Virtual Cable)** and independently verified through Windows PnP. No driver binary, security setting or registry ACL was modified.
+## 🎮 Why it was made: the creator's actual use
+The goal is **a Roblox character speaking Lelele** while an OBS stream can retain understandable natural commentary.
 
-## Build and legal
-On Windows 10/11 x64 use INSTALAR.ps1 and packaging/BUILD_EXE.ps1 with Python 3.12, PyInstaller and Inno Setup 6. The unchanged VB-CABLE ZIP is fetched from the vendor and SHA-256 checked; **vendor binaries are not committed to GitHub**.
+| Device / app | Intended route | Purpose |
+|---|---|---|
+| 🎙️ Gadnic 3.5-mm condenser microphone | Realtek pink jack → AntiCensor | Detect voice/loudness |
+| 🎧 Redragon Zeus X USB | Games → SteelSeries Sonar Gaming → USB | Hear games/music |
+| 🤖 AntiCensor | Synthetic Lelele → VB-CABLE Input | Character voice effect |
+| 🎮 Roblox | SolarisPKN-Mic Lelele / CABLE Output | Synthetic game input |
+| 📺 OBS | Separate physical Gadnic with its own filters | Natural streamer voice, if enabled |
 
-Original source code is GPL-3.0-only ([LICENSE](LICENSE)). VB-CABLE remains separately licensed proprietary software. The old experimental MicyWMD driver is excluded. Roblox, OBS, latency, endpoint naming and a real GitHub Release update still need live validation.
+💡 **OBS tip:** if you don't need to hear Lelele in your headphones, turn off audio monitoring for that source instead of leaving “Monitor and Output” enabled. This avoids duplicated playback without muting the stream source.
+
+## ✨ Features
+- 🗣️ WebRTC VAD **0–3**, default level 2, voting/release hold to reject isolated clicks.
+- 🎛️ Per-mic calibration: silence → whisper → normal speech → optional shout (**5 s per stage**).
+- 🎙️ Clean WASAPI selection without MME/DirectSound/WDM-KS duplicates; no silent source replacement.
+- 🌙 Dark interface, audio intensity meter and system tray.
+- 🧰 Optional Expert Mode to inspect VB-CABLE endpoints without disabling them in Windows.
+- 💚 About tab with the creator's official cover, author credit and SolarisPKN-Labs website.
+- 🇦🇷 🇬🇧 Bilingual UI and documentation.
+- 🔄 Opt-in updates verified using SHA-256 and deferred until AntiCensor closes.
+
+## 🚀 Installation
+Windows 10/11 x64. Find installers at [GitHub Releases](https://github.com/SolarisPKN/SolarisPKN-LiveTools/releases) when available, or build from source.
+
+1. 📦 Install the matching AntiCensor setup package.
+2. 🔌 Install **official VB-CABLE** when needed (setup may request admin privileges/reboot).
+3. 🎤 Select your actual **physical microphone**.
+4. 🎚️ Calibrate noise, whisper and speaking in your normal environment.
+5. 🎮 Select **SolarisPKN-Mic Lelele / CABLE Output** as the game's input.
+6. ✅ Check that voice activates Lelele but game playback stays on a separate route.
+
+## 🧑‍💻 Build and test
+~~~powershell
+cd SolarisPKN-AntiCensor
+powershell -ExecutionPolicy Bypass -File .\INSTALAR.ps1
+python -m unittest discover -s tests -v
+powershell -ExecutionPolicy Bypass -File .\packaging\BUILD_EXE.ps1
+~~~
+PyInstaller and Inno Setup are needed for a full setup build. The SVG/GIF generator does **not** replace the user's original cover art.
+
+## 📚 Bilingual documentation
+| 🇦🇷 Spanish | 🇬🇧 English |
+|---|---|
+| [📗 Guía](docs/GUIA-DE-USO.es.md) | [📘 Guide](docs/USER-GUIDE.en.md) |
+| [🧬 Arquitectura](docs/ARQUITECTURA.es.md) | [🧬 Architecture](docs/ARCHITECTURE.en.md) |
+| [❓ FAQ](docs/FAQ.es.md) | [❓ FAQ](docs/FAQ.en.md) |
+| [🔐 Privacidad](docs/PRIVACIDAD.es.md) | [🔐 Privacy](docs/PRIVACY.en.md) |
+| [🗒️ Notas](docs/RELEASE-NOTES.es.md) | [🗒️ Notes](docs/RELEASE-NOTES.en.md) |
+
+**Licenses:** AntiCensor code GPL-3.0-only ([LICENSE](LICENSE)). Basic VB-CABLE is independent proprietary donationware by **VB-Audio Software / Vincent Burel**; [official website](https://vb-cable.com/) and [vendor licensing](https://vb-audio.com/Services/licensing.htm). Extra cables A+B/C+D and modified drivers aren't distributed. A virtual mic does not guarantee anonymity or exemption from game rules.
+
+---
+<p align="center">💚 <strong>Software developed by <a href="https://labs.solarispkn.com.ar/">SolarisPKN-Labs</a></strong> · 🎮 Gaming · 🎙️ Lelele</p>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-label="SolarisPKN AntiCensor visual guide">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#101420"/><stop offset=".55" stop-color="#171f34"/><stop offset="1" stop-color="#231a3b"/></linearGradient>
+ <linearGradient id="glow" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#82ffd4"/><stop offset="1" stop-color="#67c5fc"/></linearGradient>
+ <filter id="soft"><feGaussianBlur stdDeviation="36"/></filter>
+</defs>
+<rect x="0" y="0" width="1200" height="360" rx="22" fill="url(#bg)"/>
+<circle cx="1056" cy="72" r="135" fill="#267d78" opacity=".19" filter="url(#soft)"/>
+<rect x="34" y="29" width="236" height="38" rx="19" fill="#243d42" stroke="#3a8378"/>
+<text x="152" y="54" fill="#82ffd4" font-family="Segoe UI,Arial,sans-serif" font-weight="700" font-size="15" text-anchor="middle">🎙 SOLARISPKN LABS</text>
+<text x="44" y="137" fill="#ffffff" font-family="Segoe UI,Arial,sans-serif" font-weight="800" font-size="72" text-anchor="start">AntiCensor</text>
+<text x="48" y="185" fill="#b8c4d7" font-family="Segoe UI,Arial,sans-serif" font-weight="400" font-size="25" text-anchor="start">Tu voz controla Lelele. Tu voz real no sale.</text>
+<text x="48" y="218" fill="#b8c4d7" font-family="Segoe UI,Arial,sans-serif" font-weight="400" font-size="22" text-anchor="start">Your voice drives Lelele. Your real voice stays private.</text>
+<rect x="47" y="265" width="153" height="42" rx="21" fill="#213b3a" stroke="#3a8174" stroke-width="1.4"/>
+<text x="124" y="293" fill="#82ffd4" font-family="Segoe UI,Arial,sans-serif" font-weight="700" font-size="16" text-anchor="middle">VOICE GATE</text>
+<rect x="212" y="265" width="153" height="42" rx="21" fill="#212f45" stroke="#355a84" stroke-width="1.4"/>
+<text x="288" y="293" fill="#67c5fc" font-family="Segoe UI,Arial,sans-serif" font-weight="700" font-size="16" text-anchor="middle">WINDOWS</text>
+<rect x="377" y="265" width="182" height="42" rx="21" fill="#302847" stroke="#6556a0" stroke-width="1.4"/>
+<text x="467" y="293" fill="#a693ff" font-family="Segoe UI,Arial,sans-serif" font-weight="700" font-size="16" text-anchor="middle">V0.8.5</text>
+<circle cx="935" cy="164" r="138" fill="#1b3f42" opacity=".7"/>
+<circle cx="935" cy="164" r="119" fill="none" stroke="#3b9188" stroke-dasharray="5 12" stroke-width="2"/>
+<rect x="909" y="86" width="52" height="112" rx="25" fill="url(#glow)"/>
+<path d="M884 159 A51 51 0 0 0 986 159" fill="none" stroke="#f4faff" stroke-width="10" stroke-linecap="round"/>
+<line x1="935" y1="211" x2="935" y2="239" stroke="#f4faff" stroke-width="9" stroke-linecap="round"/>
+<line x1="905" y1="242" x2="965" y2="242" stroke="#f4faff" stroke-width="9" stroke-linecap="round"/>
+<line x1="750" y1="136.49290870404235" x2="750" y2="183.50709129595765" stroke="#82ffd4" stroke-width="5" stroke-linecap="round"/>
+<line x1="787" y1="138.91837005630487" x2="787" y2="181.08162994369513" stroke="#82ffd4" stroke-width="5" stroke-linecap="round"/>
+<line x1="824" y1="146.3065599032816" x2="824" y2="173.6934400967184" stroke="#82ffd4" stroke-width="5" stroke-linecap="round"/>
+<line x1="861" y1="137.08843087809183" x2="861" y2="182.91156912190817" stroke="#82ffd4" stroke-width="5" stroke-linecap="round"/>
+<line x1="1009" y1="137.08843087809183" x2="1009" y2="182.91156912190817" stroke="#67c5fc" stroke-width="5" stroke-linecap="round"/>
+<line x1="1046" y1="146.3065599032816" x2="1046" y2="173.6934400967184" stroke="#67c5fc" stroke-width="5" stroke-linecap="round"/>
+<line x1="1083" y1="138.91837005630487" x2="1083" y2="181.08162994369513" stroke="#67c5fc" stroke-width="5" stroke-linecap="round"/>
+<line x1="1120" y1="136.49290870404235" x2="1120" y2="183.50709129595765" stroke="#67c5fc" stroke-width="5" stroke-linecap="round"/>
+</svg>

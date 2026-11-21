@@ -60,7 +60,7 @@ class FixedSourceAndNameTests(unittest.TestCase):
         self.assertNotIn("bcdedit", gui.lower())
 
     def test_current_version(self):
-        self.assertEqual(APP_VERSION, "0.8.2")
+        self.assertEqual(APP_VERSION, "0.8.5")
 
 
 if __name__ == "__main__":

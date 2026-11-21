@@ -1,12 +1,15 @@
 ; SolarisPKN AntiCensor GPLv3 installer. No unsigned kernel driver!
 #define ProjectRoot AddBackslash(SourcePath) + ".."
-#define Version "0.8.2"
+#define Version "0.8.5"
 [Setup]
 AppId={{8FE390B9-D2BC-43F7-91E6-23AFBE4A0B32}
 AppName=SolarisPKN AntiCensor
 AppVersion={#Version}
 AppVerName=SolarisPKN AntiCensor {#Version} (preview)
-AppPublisher=SolarisPKN
+AppPublisher=SolarisPKN-Labs
+AppPublisherURL=https://labs.solarispkn.com.ar/
+AppSupportURL=https://labs.solarispkn.com.ar/
+AppUpdatesURL=https://github.com/SolarisPKN/SolarisPKN-LiveTools/releases
 DefaultDirName={localappdata}\Programs\SolarisPKN\AntiCensor
 DefaultGroupName=SolarisPKN AntiCensor
 DisableProgramGroupPage=yes
@@ -22,7 +25,7 @@ SolidCompression=yes
 CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
-VersionInfoVersion=0.8.2.0
+VersionInfoVersion=0.8.5.0
 VersionInfoCompany=SolarisPKN
 VersionInfoDescription=SolarisPKN AntiCensor GPLv3 Installer
 
@@ -63,6 +66,8 @@ Source: "{#ProjectRoot}\calibration.py"; DestDir: "{app}\source"; Flags: ignorev
 Source: "{#ProjectRoot}\i18n.py"; DestDir: "{app}\source"; Flags: ignoreversion
 Source: "{#ProjectRoot}\theme.py"; DestDir: "{app}\source"; Flags: ignoreversion
 Source: "{#ProjectRoot}\vbcable_backend.py"; DestDir: "{app}\source"; Flags: ignoreversion
+Source: "{#ProjectRoot}\device_visibility.py"; DestDir: "{app}\source"; Flags: ignoreversion
+Source: "{#ProjectRoot}\voice_gate.py"; DestDir: "{app}\source"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\third_party\VBCABLE_Driver_Pack46.zip"; DestDir: "{app}\third_party"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\third_party\VBCABLE-NOTICE.txt"; DestDir: "{app}\third_party"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\Instalar-VBCable.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
@@ -83,6 +88,10 @@ Source: "{#ProjectRoot}\tests\test_pcm_synth.py"; DestDir: "{app}\source\tests";
 Source: "{#ProjectRoot}\tests\test_updater.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\tests\test_vbcable_backend.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\tests\test_endpoint_rename.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
+Source: "{#ProjectRoot}\tests\test_expert_mode.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
+Source: "{#ProjectRoot}\tests\test_voice_gate.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
+Source: "{#ProjectRoot}\tests\test_reference_device_list.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
+Source: "{#ProjectRoot}\tests\test_branding.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\tests\test_fixed_repo_and_name.py"; DestDir: "{app}\source\tests"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\AntiCensor.iss"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 Source: "{#ProjectRoot}\packaging\BUILD_EXE.ps1"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
@@ -94,6 +103,11 @@ Source: "{#ProjectRoot}\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\README.es.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\README_INSTALADOR.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\README_INSTALADOR.es.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#ProjectRoot}\docs\assets\cover.webp"; DestDir: "{app}\docs\assets"; Flags: ignoreversion
+Source: "{#ProjectRoot}\docs\assets\*.svg"; DestDir: "{app}\docs\assets"; Flags: ignoreversion
+Source: "{#ProjectRoot}\docs\assets\*.gif"; DestDir: "{app}\docs\assets"; Flags: ignoreversion
+Source: "{#ProjectRoot}\docs\*.md"; DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "{#ProjectRoot}\packaging\GENERAR_GRAFICOS.py"; DestDir: "{app}\source\packaging"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\SolarisPKN AntiCensor"; Filename: "{app}\SolarisPKN-AntiCensor.exe"
