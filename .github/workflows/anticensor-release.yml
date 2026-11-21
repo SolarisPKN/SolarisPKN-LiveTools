@@ -45,9 +45,16 @@ jobs:
           "ANTICENSOR_VERSION=$version" >> $env:GITHUB_ENV
           $tag = "anticensor-v$version"
           "ANTICENSOR_TAG=$tag" >> $env:GITHUB_ENV
-          $existing = gh release view $tag -R $env:GITHUB_REPOSITORY --json assets 2>$null
-          if ($LASTEXITCODE -eq 0) {
+          # Listing succeeds even when the module has no existing release.
+          # A direct gh release view on a missing tag exits 1 on PowerShell CI.
+          $listJson = gh release list -R $env:GITHUB_REPOSITORY --limit 100 --json tagName
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot list GitHub releases' }
+          $allReleases = @($listJson | ConvertFrom-Json)
+          $matching = @($allReleases | Where-Object { $_.tagName -eq $tag })
+          if ($matching.Count -gt 0) {
             $expected = "SolarisPKN-AntiCensor-Setup-v$version.exe"
+            $existing = gh release view $tag -R $env:GITHUB_REPOSITORY --json assets
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect existing AntiCensor release' }
             if (($existing | ConvertFrom-Json).assets.name -contains $expected) {
               Write-Host "Already published: $tag"
               "SKIP_EXISTING=true" >> $env:GITHUB_ENV
