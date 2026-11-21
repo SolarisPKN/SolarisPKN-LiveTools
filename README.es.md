@@ -24,6 +24,14 @@ El objetivo no es simplemente crear scripts.
 
 El objetivo es construir infraestructura para creadores.
 
+## 🎙️ Destacado: SolarisPKN-AntiCensor v0.8.5
+
+<p align="center"><a href="SolarisPKN-AntiCensor/README.es.md"><img src="SolarisPKN-AntiCensor/docs/assets/cover.webp" alt="Portada original de la brujita streamer AntiCensor" width="210"></a></p>
+
+🦊 **[SolarisPKN-AntiCensor](SolarisPKN-AntiCensor/README.es.md)** — Micrófono virtual GPLv3 que genera **Lelele sintético** para juegos compatibles. Detector clásico de voz WebRTC, separación de voz real, manual bilingüe, diagramas SVG y GIF. 🎮🎙️
+
+**Software desarrollado por [SolarisPKN-Labs](https://labs.solarispkn.com.ar/).**
+
 ## 🚀 Estado Actual
 
 Los primeros módulos públicos están enfocados en la integración entre StreamElements y Streamer.bot.
