@@ -239,9 +239,13 @@ class TrayAntiCensor:
 
     def handle_rename(self, status: str):
         self.rename_running = False
-        if status in ("RENAMED", "ALREADY"):
+        if status in ("RENAMED", "ALREADY", "NOT_PERMITTED"):
+            # The property store can be read-only on Win10: do not hammer
+            # it every minute. Manual sound settings remain available.
             self.rename_complete = True
-            if status == "RENAMED" and not self.app.active and not self.app.calibrating:
+            if status == "NOT_PERMITTED":
+                self.app.settings_driver.configure(text=self.app.T("rename_not_permitted"))
+            elif status == "RENAMED" and not self.app.active and not self.app.calibrating:
                 self.app.refresh()
 
     def periodic_rename(self):

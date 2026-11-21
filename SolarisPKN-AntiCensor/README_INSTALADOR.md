@@ -1,8 +1,8 @@
-# Installing SolarisPKN-AntiCensor v0.8.0
+# Installing SolarisPKN-AntiCensor v0.8.1
 
 [Español](README_INSTALADOR.es.md) · [Module README](README.md)
 
-Windows 10/11 x64. **SolarisPKN-AntiCensor-Setup-v0.8.0.exe** installs the GPLv3 application with **Solaris Tray-style dark mode**, bilingual settings and **LELELE only**.
+Windows 10/11 x64. **SolarisPKN-AntiCensor-Setup-v0.8.1.exe** installs the GPLv3 application with **Solaris Tray-style dark mode**, bilingual settings and **LELELE only**.
 
 **VB-CABLE Basic** from VB-Audio Software is a proprietary donationware external dependency. If missing, Setup offers the original vendor installer (UAC permission and restart). If already installed, **Install is hidden**, leaving optional **Clean driver (troubleshooting only)** with a warning and confirmation. It opens the original vendor utility and does not silently uninstall anything. Secure Boot remains enabled.
 

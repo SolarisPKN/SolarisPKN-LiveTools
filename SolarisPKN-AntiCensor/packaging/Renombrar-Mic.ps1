@@ -187,6 +187,14 @@ try {
     # MISSING is normal before VB-CABLE installation/restart. The tray retries.
     exit 0
 } catch {
-    Write-Error "AntiCensor endpoint rename failed: $($_.Exception.Message)"
+    $message = [string]$_.Exception.Message
+    # Windows may expose a read-only endpoint property store even when the
+    # driver is correctly installed. Do not retry every 60 seconds or change
+    # registry ACLs, AudioSrv, the kernel driver or Secure Boot.
+    if ($message -match '0x80070005|E_ACCESSDENIED|Acceso denegado|Access is denied') {
+        Write-Output 'ANTICENSOR_ENDPOINT_NAME=NOT_PERMITTED'
+        exit 0
+    }
+    Write-Error "AntiCensor endpoint rename failed: $message"
     exit 4
 }

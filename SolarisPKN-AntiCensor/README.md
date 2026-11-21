@@ -4,7 +4,7 @@
 
 Official [SolarisPKN-LiveTools](https://github.com/SolarisPKN/SolarisPKN-LiveTools/tree/main/SolarisPKN-AntiCensor) module, a **GPLv3 Windows application** that uses a physical microphone to measure **RMS loudness only**, without routing speech. It outputs **LELELE exclusively**. The original recorded Lelele WAV has not been supplied yet; a local synthesizer is currently used.
 
-**v0.8.0 preview.** Dark UI, guided calibration, update staging and setup are implemented; final end-to-end Roblox testing is still pending.
+**v0.8.1 preview.** Dark UI, guided calibration, update staging and setup are implemented; final end-to-end Roblox testing is still pending.
 
 ## Features
 - **Mandatory dark mode**, matching Solaris Tray: background #1D1D27, pale text and mint accents.
@@ -38,6 +38,8 @@ The fixed source path is **SolarisPKN/SolarisPKN-LiveTools/SolarisPKN-AntiCensor
 - When disabled, use the **Check for updates now** button and manually approve any download.
 - Installation is **deferred until AntiCensor has closed**, or until the next Windows sign-in before the app starts. The update helper never interrupts a stream, closes another application or restarts Windows.
 - No GitHub Release with a verifiable installer means **no download and no execution**. The repository cannot be configured to an external source.
+
+**Display-name caveat:** Windows 10 on the current test machine returned E_ACCESSDENIED when AntiCensor tried to rename the VB-CABLE recording endpoint. AntiCensor now stops retrying and continues using CABLE Output without changing registry security or vendor files.
 
 ## Build and legal
 On Windows 10/11 x64 use INSTALAR.ps1 and packaging/BUILD_EXE.ps1 with Python 3.12, PyInstaller and Inno Setup 6. The unchanged VB-CABLE ZIP is fetched from the vendor and SHA-256 checked; **vendor binaries are not committed to GitHub**.

@@ -1,6 +1,6 @@
 ; SolarisPKN AntiCensor GPLv3 installer. No unsigned kernel driver!
 #define ProjectRoot AddBackslash(SourcePath) + ".."
-#define Version "0.8.0"
+#define Version "0.8.1"
 [Setup]
 AppId={{8FE390B9-D2BC-43F7-91E6-23AFBE4A0B32}
 AppName=SolarisPKN AntiCensor
@@ -22,7 +22,7 @@ SolidCompression=yes
 CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
-VersionInfoVersion=0.8.0.0
+VersionInfoVersion=0.8.1.0
 VersionInfoCompany=SolarisPKN
 VersionInfoDescription=SolarisPKN AntiCensor GPLv3 Installer
 
