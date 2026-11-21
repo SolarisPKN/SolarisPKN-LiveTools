@@ -14,7 +14,7 @@ That's why I built **SolarisPKN-AntiCensor**: I wanted to react naturally for my
 
 🎙️ **It doesn't transcribe, bleep or censor individual words: the game simply doesn't receive my original voice through AntiCensor.** It does not guarantee avoiding sanctions or replace Roblox's voice-chat rules.
 
-🧪 Windows 10/11 x64 preview · 🛠️ GPL-3.0-only · 🌍 Spanish/English · ✅ 66 automated tests passed in development. Tests do not imply universal end-to-end compatibility.
+🧪 Windows 10/11 x64 preview · 🛠️ GPL-3.0-only · 🌍 Spanish/English · ✅ 68 automated tests passed in development. Tests do not imply universal end-to-end compatibility.
 
 <p align="center"><img src="docs/assets/voice-gate-demo.gif" width="710" alt="Animated tutorial: noise, probable voice, synthetic Lelele"></p>
 

@@ -1,0 +1,120 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Module-specific Windows release. LiveTools has independent project versions.
+name: Publish SolarisPKN-AntiCensor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'SolarisPKN-AntiCensor/**'
+      - '.github/workflows/anticensor-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: anticensor-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-2022
+    timeout-minutes: 50
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: SolarisPKN-AntiCensor
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python 3.12 x64
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Check version and existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v = [regex]::Match((Get-Content version.py -Raw), '(?m)^APP_VERSION\s*=\s*"(\d+\.\d+\.\d+)"')
+          if (-not $v.Success) { throw 'Invalid version' }
+          $version = $v.Groups[1].Value
+          $iss = [regex]::Match((Get-Content packaging/AntiCensor.iss -Raw), '#define Version "(\d+\.\d+\.\d+)"')
+          if (-not $iss.Success -or $iss.Groups[1].Value -ne $version) { throw 'Inno Setup version mismatch' }
+          "ANTICENSOR_VERSION=$version" >> $env:GITHUB_ENV
+          $tag = "anticensor-v$version"
+          "ANTICENSOR_TAG=$tag" >> $env:GITHUB_ENV
+          $existing = gh release view $tag -R $env:GITHUB_REPOSITORY --json assets 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $expected = "SolarisPKN-AntiCensor-Setup-v$version.exe"
+            if (($existing | ConvertFrom-Json).assets.name -contains $expected) {
+              Write-Host "Already published: $tag"
+              "SKIP_EXISTING=true" >> $env:GITHUB_ENV
+            } else { throw "Release exists without setup; do not overwrite assets" }
+          } else { "SKIP_EXISTING=false" >> $env:GITHUB_ENV }
+      - name: Install Python dependencies
+        if: env.SKIP_EXISTING != 'true'
+        run: |
+          python -m venv .venv
+          & .\.venv\Scripts\python.exe -m pip install --disable-pip-version-check --only-binary=:all: -r requirements.txt
+          if ($LASTEXITCODE -ne 0) { throw 'pip failed' }
+      - name: Run regression tests
+        if: env.SKIP_EXISTING != 'true'
+        run: |
+          & .\.venv\Scripts\python.exe -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { throw 'Tests failed; no release' }
+      - name: Ensure Inno Setup 6
+        if: env.SKIP_EXISTING != 'true'
+        run: |
+          $paths = @(
+            (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Inno Setup 6\ISCC.exe'),
+            (Join-Path $env:ProgramFiles 'Inno Setup 6\ISCC.exe')
+          )
+          if (-not ($paths | Where-Object { Test-Path $_ })) {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot install Inno Setup' }
+          }
+          if (-not ($paths | Where-Object { Test-Path $_ })) { throw 'Missing Inno Setup compiler' }
+      - name: Build portable and setup packages
+        if: env.SKIP_EXISTING != 'true'
+        run: |
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\packaging\BUILD_EXE.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Windows packaging failed' }
+          $v = $env:ANTICENSOR_VERSION
+          $setup = "dist\SolarisPKN-AntiCensor-Setup-v$v.exe"
+          $exe = 'dist\SolarisPKN-AntiCensor.exe'
+          if (-not (Test-Path $setup) -or -not (Test-Path $exe)) { throw 'Missing setup/portable EXE' }
+          $portable = "dist\SolarisPKN-AntiCensor-Portable-v$v.exe"
+          Copy-Item $exe $portable
+          $hashes = @()
+          foreach ($file in @($setup, $portable)) {
+            if ((Get-Item $file).Length -lt 1000000) { throw "Unexpected artifact size: $file" }
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            $hashes += "$hash  $(Split-Path $file -Leaf)"
+          }
+          $hashes | Set-Content -Encoding ascii "dist\SHA256SUMS-AntiCensor-v$v.txt"
+      - name: Publish isolated AntiCensor GitHub Release
+        if: env.SKIP_EXISTING != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v = $env:ANTICENSOR_VERSION
+          $tag = $env:ANTICENSOR_TAG
+          $releaseArgs = @(
+            $tag,
+            "dist\SolarisPKN-AntiCensor-Setup-v$v.exe",
+            "dist\SolarisPKN-AntiCensor-Portable-v$v.exe",
+            "dist\SHA256SUMS-AntiCensor-v$v.txt",
+            '--repo', $env:GITHUB_REPOSITORY,
+            '--target', $env:GITHUB_SHA,
+            '--title', "SolarisPKN-AntiCensor v$v",
+            '--notes-file', 'docs/RELEASE-NOTES.es.md',
+            '--latest=false'
+          )
+          & gh release create @releaseArgs
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
+          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
+          $names = @($release.assets | ForEach-Object { $_.name })
+          if ($names -notcontains "SolarisPKN-AntiCensor-Setup-v$v.exe") { throw 'Release missing setup' }
+          Write-Host "Published $tag, assets: $($names -join ', ')"

@@ -112,6 +112,36 @@ class UpdaterTests(unittest.TestCase):
         self.assertEqual(result.tag, "solarispkn-anticensor-v0.9.0")
         self.assertEqual(result.version, (0, 9, 0))
 
+    def test_detects_current_release_only_when_newer_than_installed(self):
+        # LiveTools can release many products: AntiCensor must find only its
+        # matching Setup-vX.Y.Z.exe and compare semantic version components.
+        content = b"R" * 1_000_100
+        release = self.release("anticensor-v0.8.5", content)
+        unrelated = self.release("publisher-v9.0.0", content)
+        with patch("updater.APP_VERSION", "0.8.2"), \
+             patch("updater.urlopen", return_value=FakeResponse([unrelated, release])):
+            found = self.updater.check(force=True)
+        self.assertEqual(found.status, "available")
+        self.assertEqual(found.version, (0, 8, 5))
+        self.assertEqual(found.tag, "anticensor-v0.8.5")
+        self.assertEqual(found.asset_url,
+                         "https://github.com/SolarisPKN/SolarisPKN-LiveTools/"
+                         "releases/download/anticensor-v0.8.5/"
+                         "SolarisPKN-AntiCensor-Setup-v0.8.5.exe")
+        with patch("updater.APP_VERSION", "0.8.5"), \
+             patch("updater.urlopen", return_value=FakeResponse([release])):
+            current = self.updater.check(force=True)
+        self.assertEqual(current.status, "current")
+
+    def test_rejects_wrong_installer_name_for_right_tag(self):
+        content = b"R" * 1_000_100
+        release = self.release("anticensor-v0.8.5", content)
+        release["assets"][0]["name"] = "Publisher-Setup-v0.8.5.exe"
+        with patch("updater.APP_VERSION", "0.8.2"), \
+             patch("updater.urlopen", return_value=FakeResponse([release])):
+            found = self.updater.check(force=True)
+        self.assertEqual(found.status, "missing")
+
     def test_missing_digest_refuses_update(self):
         content = b"Z" * 1_000_100
         item = self.release("solarispkn-anticensor-v0.9.0", content)

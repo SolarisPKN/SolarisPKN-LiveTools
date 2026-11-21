@@ -12,13 +12,13 @@ While streaming **Roblox horror games**, an unexpected jump scare sometimes made
 - 🦊 **Original creator-supplied cover** displayed in README and About tab.
 - 💚 **Software developed by SolarisPKN-Labs**, https://labs.solarispkn.com.ar/
 - 🌍 Complete bilingual guides, SVG figures, animated GIF and examples involving Roblox, Gadnic, SteelSeries Sonar, Redragon and OBS.
-- ✅ 66 automated tests passed in the development environment.
+- ✅ 68 automated tests passed in the development environment.
 
 ### ⚠️ Limitations
 No advanced echo cancellation. VB-CABLE is shared and other applications may play audio into it. Game-specific audio routing needs real-world verification.
 
 ### 📦 Installer
-Local setup artifact name: **SolarisPKN-AntiCensor-Setup-v0.8.5.exe**. A public download asset is only claimed when actually published to GitHub Releases.
+Module release assets: **SolarisPKN-AntiCensor-Setup-v0.8.5.exe** (Windows x64 installer), **SolarisPKN-AntiCensor-Portable-v0.8.5.exe** (Windows x64 standalone executable), and **SHA256SUMS-AntiCensor-v0.8.5.txt** (integrity verification). The module has its own **anticensor-v0.8.5** tag in LiveTools. The built-in updater selects only the exact setup name for a strictly newer semantic version, ignoring other modules. No functional Debian/Linux package exists for this Windows-only release.
 
 ### 🔐 Security
 No credentials, private IP addresses, personal OBS profiles, private diagnostics or captured audio are included in this public documentation.

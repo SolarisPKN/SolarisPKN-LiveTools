@@ -14,7 +14,7 @@ De ahí nació **SolarisPKN-AntiCensor**: quería poder reaccionar con naturalid
 
 🎙️ **La idea no es transcribir, silenciar o censurar mis palabras una por una: es que el juego nunca reciba mi voz original a través de AntiCensor.** No garantiza evitar sanciones ni sustituye las normas de voz de Roblox.
 
-🧪 Preview Windows 10/11 x64 · 🛠️ GPL-3.0-only · 🌍 Español / English · ✅ 66 pruebas automatizadas aprobadas en el entorno de desarrollo. La compatibilidad integral con todos los equipos y juegos sigue pendiente de validación real.
+🧪 Preview Windows 10/11 x64 · 🛠️ GPL-3.0-only · 🌍 Español / English · ✅ 68 pruebas automatizadas aprobadas en el entorno de desarrollo. La compatibilidad integral con todos los equipos y juegos sigue pendiente de validación real.
 
 <p align="center"><img src="docs/assets/voice-gate-demo.gif" width="710" alt="GIF didáctico: ruido, voz probable y sonido sintético"></p>
 

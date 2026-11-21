@@ -12,13 +12,13 @@ AntiCensor nació porque, al streamear **juegos de terror en Roblox**, un susto 
 - 🦊 **Portada ilustrada oficial** visible en README y pestaña Acerca de.
 - 💚 **Software desarrollado por SolarisPKN-Labs**, https://labs.solarispkn.com.ar/
 - 🌍 Manuales bilingües, SVG, GIF y ejemplos de uso con Roblox, Gadnic, SteelSeries Sonar, Redragon y OBS.
-- ✅ 66 pruebas automatizadas aprobadas en el entorno de desarrollo.
+- ✅ 68 pruebas automatizadas aprobadas en el entorno de desarrollo.
 
 ### ⚠️ Limitaciones
 No hay cancelación de eco avanzada. El cable es compartido y otras apps pueden escribir audio a CABLE Input. Las pruebas en algunos juegos, así como regresiones de rutas específicas, deben repetirse por el usuario.
 
 ### 📦 Instalador
-Archivo de compilación local: **SolarisPKN-AntiCensor-Setup-v0.8.5.exe**. Solo anunciamos el asset de descarga cuando efectivamente esté publicado en GitHub Releases.
+Paquetes de la release del módulo: **SolarisPKN-AntiCensor-Setup-v0.8.5.exe** (instalador Windows x64), **SolarisPKN-AntiCensor-Portable-v0.8.5.exe** (ejecutable portable Windows x64) y **SHA256SUMS-AntiCensor-v0.8.5.txt** (verificación de integridad). Tag propio: **anticensor-v0.8.5**, alojado en LiveTools sin interferir con otros módulos. El actualizador usa solo el instalador, rechaza los assets de otros productos y requiere una versión semántica mayor que la instalada. No existe paquete Debian/Linux funcional en esta versión; no se anuncia uno inexistente.
 
 ### 🔐 Seguridad
 No se publican credenciales, IP privadas, diagnósticos del usuario, archivos locales de OBS ni audios capturados.
