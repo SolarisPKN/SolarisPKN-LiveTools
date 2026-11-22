@@ -103,7 +103,7 @@ func main() {
 			n := 0
 			for ctx.Err() == nil {
 				n++
-				h.publish(Message{ID: fmt.Sprintf("demo-%d", n), Platform: []string{"youtube", "tiktok", "twitch", "kick", "facebook", "rumble"}[n%6], User: "DemoUser", Text: fmt.Sprintf("Mensaje de prueba %d ✨", n), Kind: "chat"})
+				h.publish(Message{ID: fmt.Sprintf("demo-%d", n), Platform: []string{"youtube", "tiktok", "twitch", "kick", "facebook"}[n%5], User: "DemoUser", Text: fmt.Sprintf("Mensaje de prueba %d ✨", n), Kind: "chat"})
 				if !sleepContext(ctx, 2*time.Second) {
 					return
 				}

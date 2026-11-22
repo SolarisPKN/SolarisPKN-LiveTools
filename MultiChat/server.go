@@ -72,6 +72,27 @@ func newHandler(h *Hub, c Config) http.Handler {
 		w.Header().Set("Cache-Control", "no-store")
 		_ = json.NewEncoder(w).Encode(msgs)
 	})
+	mux.HandleFunc("GET /native/feed", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		msgs := h.snapshot()
+		if len(msgs) > 80 {
+			msgs = msgs[len(msgs)-80:]
+		}
+		var out strings.Builder
+		for _, m := range msgs {
+			clean := func(s string) string {
+				return strings.Map(func(ch rune) rune {
+					if ch == '\r' || ch == '\n' || ch == '\t' || ch < 32 || ch == 127 {
+						return ' '
+					}
+					return ch
+				}, s)
+			}
+			fmt.Fprintf(&out, "[%s] %s: %s\r\n", clean(m.Platform), clean(m.User), clean(m.Text))
+		}
+		_, _ = io.WriteString(w, out.String())
+	})
 	mux.HandleFunc("GET /history", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(h.snapshot())

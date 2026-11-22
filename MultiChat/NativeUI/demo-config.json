@@ -1,0 +1,6 @@
+{
+  "listen": "127.0.0.1:8766",
+  "history_limit": 250,
+  "panel_auth": {"enabled": false},
+  "outbound": {"enabled": false}
+}

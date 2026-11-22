@@ -2,6 +2,14 @@
 
 Chat unificado local en Go, sin Electron ni un navegador por plataforma. Conectores independientes, deduplicación acotada, API en loopback, visor web opcional y soporte para una fuente nativa de OBS (código C++ separado, todavía sin binario verificado).
 
+## Interfaz nativa Windows (recomendada)
+
+El visor principal ahora es **`MultiChat-Native.exe`**: una sola ventana **16:9**, implementada con Win32/GDI+ y sin navegador integrado. El tercio izquierdo contiene chat y caja de comandos, con los cinco selectores vectoriales de plataforma justo encima; el resto **2/3 está intencionalmente vacío**, reservado para futuras decisiones. Icono gris = no disponible para enviar; color = habilitado en el modo actual; resalte = seleccionado.
+
+Está preparada una demo completamente local sin credenciales: el frontend Win32 utiliza `MultiChat-commands-preview.exe` (motor Go oculto) y la configuración `NativeUI/demo-config.json` en el puerto 8766. No requiere cerrar ni cambiar el antiguo visor web de diagnóstico en 8765. Las autorizaciones reales de plataformas siguen pendientes.
+
+**Código fuente, compilación, especificación exacta del layout y límites:** [NativeUI/README.es.md](NativeUI/README.es.md). Los SVG fuente de cada plataforma están en `NativeUI/assets`; las siluetas se dibujan con GDI+ para no cargar ningún motor de navegador.
+
 ## Plataformas (prioridad 21/11/2026)
 
 | Plataforma | Integración local | Validación |
