@@ -21,12 +21,13 @@ const panelSessionCookie = "solarispkn_mc_session"
 const panelSessionLifetime = 8 * time.Hour
 
 type panelAuth struct {
-	enabled  bool
-	panelKey string
-	obsKey   string
-	mu       sync.Mutex
-	sessions map[string]time.Time
-	failures map[string]panelFailure
+	enabled   bool
+	panelKey  string
+	obsKey    string
+	nativeKey string
+	mu        sync.Mutex
+	sessions  map[string]time.Time
+	failures  map[string]panelFailure
 }
 
 type panelFailure struct {
@@ -38,6 +39,9 @@ func newPanelAuth(c PanelAuthConfig) *panelAuth {
 	a := &panelAuth{enabled: c.Enabled, sessions: make(map[string]time.Time), failures: make(map[string]panelFailure)}
 	if c.Enabled {
 		a.panelKey = os.Getenv(c.TokenEnv)
+		if c.NativeTokenEnv != "" {
+			a.nativeKey = os.Getenv(c.NativeTokenEnv)
+		}
 		if c.OBSTokenEnv != "" {
 			a.obsKey = os.Getenv(c.OBSTokenEnv)
 		}
@@ -76,6 +80,17 @@ func (a *panelAuth) isOBSAuthorized(r *http.Request) bool {
 	}
 	// The native OBS plugin can supply a separate read-only token.
 	return constantTimeStringEqual(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "), a.obsKey)
+}
+
+func (a *panelAuth) isNativeAuthorized(r *http.Request) bool {
+	if !a.enabled || a.nativeKey == "" {
+		return false
+	}
+	allowed := (r.Method == "GET" && (r.URL.Path == "/native/feed" || r.URL.Path == "/api/native/status" || r.URL.Path == "/api/outbound/status" || r.URL.Path == "/auth/providers")) || (r.Method == "POST" && r.URL.Path == "/api/outbound/send")
+	if !allowed {
+		return false
+	}
+	return constantTimeStringEqual(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "), a.nativeKey)
 }
 
 func randomSessionToken() (string, error) {
@@ -229,11 +244,14 @@ func (a *panelAuth) middleware(next http.Handler) http.Handler {
 		case r.URL.Path == "/health":
 			next.ServeHTTP(w, r)
 			return
+		case r.URL.Path == "/api/obs/event" && r.Method == "POST":
+			next.ServeHTTP(w, r)
+			return // distinct OBS event token is verified in the handler
 		case r.URL.Path == "/api/ingest" && r.Method == "POST":
 			next.ServeHTTP(w, r)
 			return // independent token protection in existing handler
 		}
-		if !a.isAuthenticated(r) && !a.isOBSAuthorized(r) {
+		if !a.isAuthenticated(r) && !a.isOBSAuthorized(r) && !a.isNativeAuthorized(r) {
 			if r.Method == "GET" && r.URL.Path == "/" {
 				http.Redirect(w, r, "/auth/login", http.StatusSeeOther)
 				return

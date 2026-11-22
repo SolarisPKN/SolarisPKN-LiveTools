@@ -63,6 +63,7 @@ func youtubeLookupLiveChatID(ctx context.Context, client *http.Client, videoID, 
 	return data.Items[0].LiveStreamingDetails.ActiveLiveChatID, nil
 }
 func youtubeLoop(ctx context.Context, c YouTubeConfig, h *Hub, logf func(string, ...any)) {
+	defer h.clearConnection("youtube")
 	client := &http.Client{Timeout: 12 * time.Second}
 	var pageToken string
 	chatID := c.LiveChatID
@@ -177,6 +178,7 @@ func youtubeLoop(ctx context.Context, c YouTubeConfig, h *Hub, logf func(string,
 			}
 			continue
 		}
+		h.setConnection("youtube", chatID, 90*time.Second)
 		var payload youtubeResponse
 		if err := json.Unmarshal(raw, &payload); err != nil {
 			logf("[youtube] invalid response")

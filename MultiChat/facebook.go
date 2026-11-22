@@ -50,6 +50,7 @@ func parseFacebookMessages(raw []byte) ([]Message, error) {
 	return result, nil
 }
 func facebookLoop(ctx context.Context, c FacebookConfig, h *Hub, logf func(string, ...any)) {
+	defer h.clearConnection("facebook")
 	client := &http.Client{Timeout: 12 * time.Second}
 	delay := time.Duration(c.PollSeconds) * time.Second
 	currentVideoID := c.LiveVideoID
@@ -114,6 +115,7 @@ func facebookLoop(ctx context.Context, c FacebookConfig, h *Hub, logf func(strin
 			}
 			continue
 		}
+		h.setConnection("facebook", currentVideoID, 65*time.Second)
 		msgs, err := parseFacebookMessages(raw)
 		if err != nil {
 			logf("[facebook] invalid Graph response")

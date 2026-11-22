@@ -30,6 +30,7 @@ func parseTikTokChat(msg *pb.WebcastChatMessage) (Message, bool) {
 	return Message{ID: id, Platform: "tiktok", User: user, Text: msg.Content, Kind: "chat"}, true
 }
 func tiktokLoop(ctx context.Context, c TikTokConfig, h *Hub, logf func(string, ...any)) {
+	defer h.clearConnection("tiktok")
 	delay := 5 * time.Second
 	for ctx.Err() == nil {
 		feed, err := golive.NewClient(c.Username).MaxRetries(10).Connect(ctx)
@@ -44,6 +45,7 @@ func tiktokLoop(ctx context.Context, c TikTokConfig, h *Hub, logf func(string, .
 			continue
 		}
 		delay = 5 * time.Second
+		h.setConnection("tiktok", c.Username, 4*time.Minute)
 		logf("[tiktok] connected to public LIVE chat")
 		running := true
 		for running && ctx.Err() == nil {

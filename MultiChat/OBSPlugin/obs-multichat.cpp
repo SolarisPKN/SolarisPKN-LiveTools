@@ -2,12 +2,17 @@
 // Zero embedded browsers. One hidden OBS GDI+ text renderer per visible MultiChat source.
 // Network access: GET 127.0.0.1:<port>/obs/messages?limit=N only.
 #include <obs-module.h>
+#include <obs-frontend-api.h>
 #include <windows.h>
 #include <winhttp.h>
 
 #include <algorithm>
 #include <atomic>
+#include <condition_variable>
+#include <deque>
 #include <chrono>
+#include <cctype>
+#include <cstdlib>
 #include <cstdint>
 #include <mutex>
 #include <string>
@@ -17,6 +22,124 @@
 OBS_DECLARE_MODULE()
 
 namespace {
+
+
+// OBS frontend event bridge: no stream keys, session cookies or RTMP URLs ever sent.
+struct OBSEventBridge {
+    std::mutex mutex;
+    std::condition_variable cv;
+    std::deque<std::pair<std::string,std::string>> queued;
+    std::thread worker;
+    bool running = true;
+    bool streaming = false;
+    std::string service = "unknown";
+};
+OBSEventBridge eventBridge;
+
+std::string obsServiceCategory()
+{
+    // Only the public OBS service label is inspected. Do not read "key" / "server".
+    obs_service_t *service = obs_frontend_get_streaming_service();
+    if (!service) return "unknown";
+    obs_data_t *settings = obs_service_get_settings(service);
+    std::string label;
+    if (settings) {
+        label = obs_data_get_string(settings, "service");
+        obs_data_release(settings);
+    }
+    if (label.empty()) label = obs_service_get_type(service);
+    if (label.size() > 96) label.resize(96);
+    std::transform(label.begin(), label.end(), label.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    for (const char *key : {"youtube", "twitch", "facebook", "kick", "tiktok"})
+        if (label.find(key) != std::string::npos) return key;
+    return "unknown";
+}
+
+void sendOBSEvent(const std::string &kind, const std::string &service)
+{
+    wchar_t token[256] = {};
+    const DWORD chars = GetEnvironmentVariableW(L"MULTICHAT_OBS_EVENT_TOKEN", token, 256);
+    if (chars < 32 || chars >= 256) return;
+    const std::wstring secret(token, chars);
+    if (secret.find_first_of(L"\r\n") != std::wstring::npos) return;
+
+    unsigned port = 8766;
+    wchar_t portText[12] = {};
+    DWORD portLength = GetEnvironmentVariableW(L"MULTICHAT_PORT", portText, 12);
+    if (portLength > 0 && portLength < 12) {
+        wchar_t *end = nullptr;
+        const unsigned long value = wcstoul(portText, &end, 10);
+        if (end && *end == 0 && value >= 1024 && value <= 65535)
+            port = static_cast<unsigned>(value);
+    }
+    const std::string body = "{\"event\":\"" + kind + "\",\"service\":\"" + service + "\"}";
+    const std::wstring headers =
+        L"Authorization: Bearer " + secret +
+        L"\r\nX-SolarisPKN-Action: obs\r\nContent-Type: application/json\r\n";
+    HINTERNET session = WinHttpOpen(L"SolarisPKN-OBS-EventBridge/0.1",
+                                    WINHTTP_ACCESS_TYPE_NO_PROXY, nullptr, nullptr, 0);
+    if (!session) return;
+    WinHttpSetTimeouts(session, 800, 800, 900, 1000);
+    HINTERNET connection = WinHttpConnect(session, L"127.0.0.1",
+                                          static_cast<INTERNET_PORT>(port), 0);
+    if (connection) {
+        HINTERNET req = WinHttpOpenRequest(connection, L"POST",
+                                           L"/api/obs/event", nullptr,
+                                           WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
+        if (req) {
+            WinHttpSendRequest(req, headers.c_str(), DWORD(-1),
+                               (LPVOID)body.data(), DWORD(body.size()),
+                               DWORD(body.size()), 0);
+            WinHttpReceiveResponse(req, nullptr);
+            WinHttpCloseHandle(req);
+        }
+        WinHttpCloseHandle(connection);
+    }
+    WinHttpCloseHandle(session);
+}
+
+void eventWorker()
+{
+    for (;;) {
+        std::pair<std::string,std::string> item;
+        {
+            std::unique_lock<std::mutex> lk(eventBridge.mutex);
+            eventBridge.cv.wait_for(lk, std::chrono::seconds(15), []{
+                return !eventBridge.running || !eventBridge.queued.empty();
+            });
+            if (!eventBridge.running) break;
+            if (!eventBridge.queued.empty()) {
+                item = std::move(eventBridge.queued.front());
+                eventBridge.queued.pop_front();
+            } else if (eventBridge.streaming) {
+                // Heartbeat: catches the case where OBS started before Go MultiChat.
+                item = {"started", eventBridge.service};
+            } else {
+                continue;
+            }
+        }
+        sendOBSEvent(item.first,item.second);
+    }
+}
+
+void onOBSStreamEvent(enum obs_frontend_event event, void *)
+{
+    if (event != OBS_FRONTEND_EVENT_STREAMING_STARTED &&
+        event != OBS_FRONTEND_EVENT_STREAMING_STOPPED) return;
+    const std::string state = event == OBS_FRONTEND_EVENT_STREAMING_STARTED
+                                  ? "started" : "stopped";
+    const std::string service = obsServiceCategory();
+    {
+        std::lock_guard<std::mutex> lk(eventBridge.mutex);
+        // Do not queue unbounded events if an external process is unavailable.
+        if (eventBridge.queued.size() >= 8) eventBridge.queued.pop_front();
+        eventBridge.streaming = state == "started";
+        eventBridge.service = service;
+        eventBridge.queued.emplace_back(state,service);
+    }
+    eventBridge.cv.notify_one();
+}
 
 constexpr uint32_t kDefaultWidth = 740;
 constexpr uint32_t kDefaultHeight = 460;
@@ -312,6 +435,23 @@ extern "C" bool obs_module_load(void)
     info.get_width = getWidth;
     info.get_height = getHeight;
     obs_register_source(&info);
-    blog(LOG_INFO, "[MultiChat] Native source registered; no CEF/Browser Source used.");
+    eventBridge.worker = std::thread(eventWorker);
+    obs_frontend_add_event_callback(onOBSStreamEvent, nullptr);
+    // OBS may already be streaming when the module is (re)loaded.
+    if (obs_frontend_streaming_active())
+        onOBSStreamEvent(OBS_FRONTEND_EVENT_STREAMING_STARTED, nullptr);
+    blog(LOG_INFO, "[MultiChat] Native source + OBS streaming event bridge registered; no browser used.");
     return true;
+}
+
+extern "C" void obs_module_unload(void)
+{
+    obs_frontend_remove_event_callback(onOBSStreamEvent, nullptr);
+    {
+        std::lock_guard<std::mutex> lock(eventBridge.mutex);
+        eventBridge.running = false;
+        eventBridge.queued.clear();
+    }
+    eventBridge.cv.notify_one();
+    if (eventBridge.worker.joinable()) eventBridge.worker.join();
 }

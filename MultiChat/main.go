@@ -78,7 +78,14 @@ func main() {
 			}
 		}()
 	}
-	if !*demo {
+	if cfg.OBS.Enabled && cfg.OBS.StartCollectorsOnStream && !*demo {
+		h.coordinator = newOBSCoordinator(ctx, cfg, h)
+		log.Println("MultiChat: esperando evento autenticado de OBS; no se iniciarán colectores antes del stream")
+	}
+	if !*demo && cfg.OBS.Enabled && cfg.OBS.WebSocketEnabled {
+		go obsWebsocketLoop(ctx, cfg, h, log.Printf)
+	}
+	if !*demo && h.coordinator == nil {
 		if cfg.Twitch.Enabled {
 			go twitchLoop(ctx, cfg.Twitch, h, log.Printf)
 		}

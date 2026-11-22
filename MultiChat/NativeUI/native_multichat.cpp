@@ -1,11 +1,12 @@
-// SolarisPKN MultiChat Native — Windows desktop shell.
-// Pure Win32 controls and GDI+ vector marks; no WebView/Electron/CEF/browser runtime.
-// The actual collectors and outbound authorization remain in the Go backend.
+// SolarisPKN MultiChat — compact Windows native sidebar, no Chromium/WebView/Electron.
+// UI only: all platform network and OBS stream activity lives in the Go engine.
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <objidl.h>
+#include <richedit.h>
 #include <gdiplus.h>
 #include <winhttp.h>
+#include <shellapi.h>
 #include <algorithm>
 #include <atomic>
 #include <memory>
@@ -13,91 +14,90 @@
 #include <thread>
 #include <vector>
 #include <chrono>
+#include <cwchar>
+#include <cmath>
 #pragma comment(lib,"winhttp.lib")
 #pragma comment(lib,"gdiplus.lib")
 #pragma comment(lib,"gdi32.lib")
 #pragma comment(lib,"user32.lib")
+#pragma comment(lib,"shell32.lib")
 #pragma comment(lib,"comctl32.lib")
 using namespace Gdiplus;
-
 namespace {
-constexpr unsigned kPort = 8766;
-constexpr UINT kPollMessage = WM_APP+101;
-constexpr UINT kSentMessage = WM_APP+102;
-constexpr int kIconBase=610;
-constexpr int kSend=641,kAll=642,kNone=643,kChat=644,kMessage=645,kResult=646,kStatus=647;
-const wchar_t *kPlatformNames[5]={L"YouTube",L"TikTok",L"Twitch",L"Kick",L"Facebook"};
-const char *kPlatformKeys[5]={"youtube","tiktok","twitch","kick","facebook"};
-const wchar_t *kDemoConfig=L"NativeUI\\demo-config.json";
+constexpr INTERNET_PORT kPort=8766;
+constexpr UINT kPollMessage=WM_APP+101,kSentMessage=WM_APP+102;
+constexpr int kIconBase=610,kGearBase=620;
+constexpr int kChat=644,kMessage=645,kResult=646,kStatus=647,kSend=648,kAll=649,kNone=650,kFontMinus=651,kFontPlus=652;
+const wchar_t* kNames[5]={L"YouTube",L"TikTok",L"Twitch",L"Kick",L"Facebook"};
+const char* kKeys[5]={"youtube","tiktok","twitch","kick","facebook"};
+const wchar_t* kShortNames[5]={L"YT",L"TT",L"TW",L"K",L"FB"};
 HINSTANCE instance;
 HWND windowHandle=nullptr,chatHandle=nullptr,messageHandle=nullptr,resultHandle=nullptr,statusHandle=nullptr;
-HWND iconButtons[5]{},sendButton=nullptr,allButton=nullptr,noneButton=nullptr;
-HFONT fontNormal=nullptr,fontStrong=nullptr,fontSmall=nullptr;
-HBRUSH brushDark=nullptr,brushEdit=nullptr;
+HWND icons[5]{},gears[5]{},sendButton=nullptr,allButton=nullptr,noneButton=nullptr,minusButton=nullptr,plusButton=nullptr;
+HFONT fontBody=nullptr,fontHeading=nullptr,fontSmall=nullptr;
+HBRUSH brushBackground=nullptr,brushInput=nullptr;
 std::atomic<bool> pollBusy{false},sendBusy{false};
-bool selected[5]={false,false,false,false,false},ready[5]={false,false,false,false,false},isDemo=false;
-std::wstring lastChat,appDirectory;
-std::wstring resultText=L"Modo de prueba: todavía no enviaste nada.";
-COLORREF textColor=RGB(233,232,244);
-
-std::wstring utf8ToWide(const std::string &s){
+bool selected[5]{},sendReady[5]{},online[5]{},configured[5]{},isDemo=false,obsStreaming=false,blink=true;
+int fontPixels=13;
+std::wstring lastChat,appDirectory,preferencesPath;
+std::wstring resultText=L"Elegí un destino para enviar.";
+const COLORREF textColor=RGB(228,230,242);
+std::wstring wideUTF8(const std::string& s){
  if(s.empty())return {};
  int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),nullptr,0);
- if(n<1)return L"";
- std::wstring w(n,L'\0');
- MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),w.data(),n);
- return w;
+ if(n<=0)return L"";
+ std::wstring result(size_t(n),L'\0');
+ MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),result.data(),n);
+ return result;
 }
-std::string wideToUtf8(const std::wstring &s){
+std::string utf8Wide(const std::wstring& s){
  if(s.empty())return {};
  int n=WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),nullptr,0,nullptr,nullptr);
- std::string u(n,'\0');
- WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),u.data(),n,nullptr,nullptr);
- return u;
+ if(n<=0)return {};
+ std::string out(size_t(n),'\0');
+ WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),out.data(),n,nullptr,nullptr);
+ return out;
 }
-std::wstring trimWide(std::wstring s){
- const auto first=s.find_first_not_of(L" \t\r\n");
- if(first==std::wstring::npos)return L"";
- const auto last=s.find_last_not_of(L" \t\r\n");
+std::wstring trimmed(const std::wstring& s){
+ const auto first=s.find_first_not_of(L" \n\r\t");
+ if(first==std::wstring::npos)return {};
+ const auto last=s.find_last_not_of(L" \n\r\t");
  return s.substr(first,last-first+1);
 }
-std::string escapeJSON(const std::string &s){
- std::string out;
+std::string jsonEscape(const std::string& s){
+ std::string out;out.reserve(s.size()+10);
  for(unsigned char c:s){
-  switch(c){
-  case '"':out+="\\\"";break;
-  case '\\':out+="\\\\";break;
-  case '\n':out+="\\n";break;
-  case '\r':out+="\\r";break;
-  case '\t':out+="\\t";break;
-  default:if(c<32){out+=' ';}else out+=char(c);break;
-  }
+  switch(c){case '"':out+="\\\"";break;case '\\':out+="\\\\";break;case '\r':out+="\\r";break;case '\n':out+="\\n";break;case '\t':out+="\\t";break;default:if(c<32)out+=' ';else out+=(char)c;break;}
  }
  return out;
 }
-
-struct HTTPResult {int status=0;std::string body;};
-HTTPResult request(const wchar_t *method,const wchar_t *uri,const std::string &payload={},bool action=false){
- HTTPResult answer;
- HINTERNET session=WinHttpOpen(L"SolarisPKN-MultiChat-Native/0.1",WINHTTP_ACCESS_TYPE_NO_PROXY,nullptr,nullptr,0);
- if(!session)return answer;
- WinHttpSetTimeouts(session,700,700,1600,1600);
+struct HTTPResult{int status=0;std::string body;};
+HTTPResult request(const wchar_t* method,const wchar_t* path,const std::string& payload={},bool action=false){
+ HTTPResult ans;
+ HINTERNET session=WinHttpOpen(L"SolarisPKN-NativeMultiChat/0.3",WINHTTP_ACCESS_TYPE_NO_PROXY,nullptr,nullptr,0);
+ if(!session)return ans;
+ WinHttpSetTimeouts(session,650,650,1800,1800);
  HINTERNET connection=WinHttpConnect(session,L"127.0.0.1",kPort,0);
  if(connection){
-  HINTERNET req=WinHttpOpenRequest(connection,method,uri,nullptr,WINHTTP_NO_REFERER,WINHTTP_DEFAULT_ACCEPT_TYPES,0);
+  HINTERNET req=WinHttpOpenRequest(connection,method,path,nullptr,WINHTTP_NO_REFERER,WINHTTP_DEFAULT_ACCEPT_TYPES,0);
   if(req){
-   const wchar_t *headers=action?L"Content-Type: application/json\r\nX-SolarisPKN-Action: send\r\n":nullptr;
-   DWORD headersLen=action?(DWORD)-1:0;
-   bool ok=WinHttpSendRequest(req,headers,headersLen,
-    payload.empty()?WINHTTP_NO_REQUEST_DATA:(LPVOID)payload.data(),
-    (DWORD)payload.size(),(DWORD)payload.size(),0);
-   if(ok&&WinHttpReceiveResponse(req,nullptr)){
-    DWORD code=0,bytes=sizeof(code);
-    if(WinHttpQueryHeaders(req,WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,WINHTTP_HEADER_NAME_BY_INDEX,&code,&bytes,WINHTTP_NO_HEADER_INDEX))answer.status=int(code);
-    char buffer[4096];DWORD got=0;
-    while(WinHttpReadData(req,buffer,sizeof(buffer),&got)&&got!=0){
-     if(answer.body.size()+got>120000){answer.body.clear();break;}
-     answer.body.append(buffer,got);
+   std::wstring headers;
+   wchar_t nativeToken[256]{};
+   DWORD n=GetEnvironmentVariableW(L"MULTICHAT_NATIVE_TOKEN",nativeToken,256);
+   if(n>=32&&n<256){
+    std::wstring secret(nativeToken,n);
+    if(secret.find_first_of(L"\r\n")==std::wstring::npos)
+     headers=L"Authorization: Bearer "+secret+L"\r\n";
+   }
+   if(action)headers+=L"Content-Type: application/json\r\nX-SolarisPKN-Action: send\r\n";
+   if(WinHttpSendRequest(req,headers.empty()?WINHTTP_NO_ADDITIONAL_HEADERS:headers.c_str(),headers.empty()?0:DWORD(-1),payload.empty()?WINHTTP_NO_REQUEST_DATA:(LPVOID)payload.data(),(DWORD)payload.size(),(DWORD)payload.size(),0)
+      &&WinHttpReceiveResponse(req,nullptr)){
+    DWORD status=0,len=sizeof(status);
+    if(WinHttpQueryHeaders(req,WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,WINHTTP_HEADER_NAME_BY_INDEX,&status,&len,WINHTTP_NO_HEADER_INDEX))ans.status=int(status);
+    char buf[4096];DWORD read=0;
+    while(WinHttpReadData(req,buf,sizeof(buf),&read)&&read){
+     if(ans.body.size()+read>120000){ans.body.clear();break;}
+     ans.body.append(buf,read);
     }
    }
    WinHttpCloseHandle(req);
@@ -105,85 +105,97 @@ HTTPResult request(const wchar_t *method,const wchar_t *uri,const std::string &p
   WinHttpCloseHandle(connection);
  }
  WinHttpCloseHandle(session);
- return answer;
+ return ans;
 }
-bool hasJSONValue(const std::string &data,const char *k,const char *v){
- return data.find(std::string("\"")+k+"\":\""+v+"\"")!=std::string::npos;
+bool jsonString(const std::string& s,const char* field,const char* value){
+ return s.find(std::string("\"")+field+"\":\""+value+"\"")!=std::string::npos;
 }
-bool jsonBoolAtPlatform(const std::string &data,const char *key){
- std::string needle=std::string("\"platform\":\"")+key+"\"";
- auto start=data.find(needle);
+bool jsonFieldFor(const std::string& json,const char* platform,const char* field){
+ auto start=json.find(std::string("\"platform\":\"")+platform+"\"");
  if(start==std::string::npos)return false;
- auto end=data.find('}',start);
+ auto end=json.find('}',start);
  if(end==std::string::npos)return false;
- return data.substr(start,end-start).find("\"ready\":true")!=std::string::npos;
+ return json.substr(start,end-start).find(std::string("\"")+field+"\":true")!=std::string::npos;
 }
-void enableSend(){
+std::wstring appPath(){
+ wchar_t file[MAX_PATH]{};GetModuleFileNameW(nullptr,file,MAX_PATH);
+ std::wstring path(file);auto i=path.find_last_of(L"\\/");
+ return i==std::wstring::npos?L".":path.substr(0,i);
+}
+void applyFont(HWND h,HFONT f){if(h)SendMessageW(h,WM_SETFONT,(WPARAM)f,TRUE);}
+void rebuildFonts(){
+ HFONT previousBody=fontBody,previousHeading=fontHeading,previousSmall=fontSmall;
+ fontBody=CreateFontW(-fontPixels,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Segoe UI");
+ fontHeading=CreateFontW(-(fontPixels+3),0,0,0,FW_SEMIBOLD,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Segoe UI");
+ fontSmall=CreateFontW(-(std::max(10,fontPixels-2)),0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Segoe UI");
+ for(HWND h:{chatHandle,messageHandle,sendButton})applyFont(h,fontBody);
+ for(HWND h:{resultHandle,statusHandle,allButton,noneButton,minusButton,plusButton})applyFont(h,fontSmall);
+ if(previousBody)DeleteObject(previousBody);
+ if(previousHeading)DeleteObject(previousHeading);
+ if(previousSmall)DeleteObject(previousSmall);
+ if(windowHandle)InvalidateRect(windowHandle,nullptr,TRUE);
+}
+void saveFont(){
+ const std::wstring value=std::to_wstring(fontPixels);
+ WritePrivateProfileStringW(L"UI",L"font_pixels",value.c_str(),preferencesPath.c_str());
+}
+HWND child(const wchar_t* klass,const wchar_t* title,DWORD style,int id,DWORD exStyle=0){
+ return CreateWindowExW(exStyle,klass,title,WS_CHILD|WS_VISIBLE|style,0,0,0,0,windowHandle,(HMENU)(INT_PTR)id,instance,nullptr);
+}
+void canSend(){
  if(!sendButton||!messageHandle)return;
- int count=0;
- for(int i=0;i<5;i++)if(selected[i]&&ready[i])count++;
- int len=GetWindowTextLengthW(messageHandle);
- EnableWindow(sendButton,!sendBusy.load()&&count>0&&len>0&&len<=200);
+ bool chosen=false;
+ for(int i=0;i<5;i++)if(selected[i]&&sendReady[i])chosen=true;
+ const int len=GetWindowTextLengthW(messageHandle);
+ EnableWindow(sendButton,chosen&&len>0&&len<=200&&!sendBusy.load());
 }
 void redrawIcons(){
- for(int i=0;i<5;i++){
-  if(iconButtons[i]){
-   EnableWindow(iconButtons[i],ready[i]);
-   InvalidateRect(iconButtons[i],nullptr,FALSE);
-  }
- }
- enableSend();
+ for(int i=0;i<5;i++){if(icons[i])InvalidateRect(icons[i],nullptr,FALSE);if(gears[i])InvalidateRect(gears[i],nullptr,FALSE);}
+ canSend();
 }
-struct PollState{
- HTTPResult feed;
- HTTPResult targets;
-};
-void pollAsync(HWND target){
- if(pollBusy.exchange(true))return;
- std::thread([target](){
-  auto *state=new PollState{request(L"GET",L"/native/feed"),request(L"GET",L"/api/outbound/status")};
-  if(!PostMessageW(target,kPollMessage,0,(LPARAM)state))delete state;
-  pollBusy=false;
- }).detach();
-}
-void setResult(const std::wstring &s){
+void result(const std::wstring& s){
  resultText=s;
  if(resultHandle)SetWindowTextW(resultHandle,s.c_str());
 }
-void sendNow(){
- if(sendBusy.load()||!messageHandle)return;
- int len=GetWindowTextLengthW(messageHandle);
- if(len<=0||len>200)return;
- std::wstring msg(len+1,L'\0');
- GetWindowTextW(messageHandle,msg.data(),len+1);
- msg.resize(wcslen(msg.c_str()));
- msg=trimWide(msg);
- if(msg.empty()||msg.find_first_of(L"\r\n")!=std::wstring::npos)return;
- std::vector<int> targets;
- for(int i=0;i<5;i++)if(selected[i]&&ready[i])targets.push_back(i);
- if(targets.empty())return;
- if(!isDemo){
-  std::wstring confirmation=L"¿Enviar este mensaje a "+std::to_wstring(targets.size())+L" plataforma(s)?\n\n"+msg;
-  if(MessageBoxW(windowHandle,confirmation.c_str(),L"Confirmar envío real",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2)!=IDYES)return;
- }
- std::string payload="{\"message\":\""+escapeJSON(wideToUtf8(msg))+"\",\"targets\":[";
- for(size_t i=0;i<targets.size();i++){
-  if(i)payload+=",";
-  payload+="\""+std::string(kPlatformKeys[targets[i]])+"\"";
- }
- payload+="]}";
- if(sendBusy.exchange(true))return;
- setResult(L"Enviando a "+std::to_wstring(targets.size())+L" destino(s)...");
- enableSend();
- HWND target=windowHandle;
- std::thread([target,payload=std::move(payload)](){
-  HTTPResult *result=new HTTPResult(request(L"POST",L"/api/outbound/send",payload,true));
-  if(!PostMessageW(target,kSentMessage,0,(LPARAM)result))delete result;
+struct PollState{HTTPResult chat,targets,connection;};
+void beginPoll(HWND target){
+ if(pollBusy.exchange(true))return;
+ std::thread([target](){
+  std::unique_ptr<PollState> state(new PollState{request(L"GET",L"/native/feed"),request(L"GET",L"/api/outbound/status"),request(L"GET",L"/api/native/status")});
+  if(PostMessageW(target,kPollMessage,0,(LPARAM)state.get()))state.release();
+  pollBusy.store(false);
  }).detach();
 }
-void colorBackground(HDC hdc,const RECT &r,COLORREF c){
- HBRUSH b=CreateSolidBrush(c);
- FillRect(hdc,&r,b);DeleteObject(b);
+void beginSend(){
+ if(!messageHandle||sendBusy.load())return;
+ int len=GetWindowTextLengthW(messageHandle);
+ if(len<1||len>200)return;
+ std::wstring raw(size_t(len+1),L'\0');
+ GetWindowTextW(messageHandle,raw.data(),len+1);
+ raw.resize(wcslen(raw.c_str()));
+ std::wstring txt=trimmed(raw);
+ if(txt.empty()||txt.find_first_of(L"\r\n")!=std::wstring::npos)return;
+ std::vector<int> targets;
+ for(int i=0;i<5;i++)if(selected[i]&&sendReady[i])targets.push_back(i);
+ if(targets.empty())return;
+ if(!isDemo){
+  std::wstring prompt=L"¿Enviar a "+std::to_wstring(targets.size())+L" chat(s)?\n\n"+txt;
+  if(MessageBoxW(windowHandle,prompt.c_str(),L"Confirmar publicación",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2)!=IDYES)return;
+ }
+ std::string payload="{\"message\":\""+jsonEscape(utf8Wide(txt))+"\",\"targets\":[";
+ for(size_t i=0;i<targets.size();i++){if(i)payload+=",";payload+="\""+std::string(kKeys[targets[i]])+"\"";}
+ payload+="]}";
+ if(sendBusy.exchange(true))return;
+ result(L"Procesando "+std::to_wstring(targets.size())+L" destino(s)…");
+ canSend();
+ HWND target=windowHandle;
+ std::thread([target,payload=std::move(payload)](){
+  std::unique_ptr<HTTPResult> output(new HTTPResult(request(L"POST",L"/api/outbound/send",payload,true)));
+  if(PostMessageW(target,kSentMessage,0,(LPARAM)output.get()))output.release();
+ }).detach();
+}
+void paintBackground(HDC hdc,const RECT& r,COLORREF c){
+ HBRUSH b=CreateSolidBrush(c);FillRect(hdc,&r,b);DeleteObject(b);
 }
 void roundedBox(Graphics &g,RectF r,Color color,REAL radius){
  GraphicsPath path;
@@ -247,250 +259,346 @@ void drawLogo(Graphics &g,int id,RectF r,bool colored){
  }
  }
 }
-void drawIconButton(DRAWITEMSTRUCT *d){
- const int index=int(d->CtlID)-kIconBase;
- if(index<0||index>=5)return;
+
+void drawIcon(DRAWITEMSTRUCT* d){
+ int i=int(d->CtlID)-kIconBase;
+ if(i<0||i>4)return;
  RECT r=d->rcItem;
- HDC hdc=d->hDC;
- Graphics g(hdc);
- g.SetSmoothingMode(SmoothingModeAntiAlias);
- const bool can=ready[index];
- const bool checked=selected[index]&&can;
- roundedBox(g,RectF((REAL)r.left,(REAL)r.top,(REAL)(r.right-r.left),(REAL)(r.bottom-r.top)),
-  checked?Color(255,63,47,93):Color(255,32,33,45),8.f);
- if(checked){
-  Pen outline(Color(255,186,145,250),2.f);
-  g.DrawRectangle(&outline,REAL(r.left+1),REAL(r.top+1),REAL(r.right-r.left-3),REAL(r.bottom-r.top-3));
+ int width=r.right-r.left,height=r.bottom-r.top;
+ Graphics g(d->hDC);g.SetSmoothingMode(SmoothingModeAntiAlias);
+ bool can=sendReady[i],on=selected[i]&&can;
+ roundedBox(g,RectF((REAL)r.left,(REAL)r.top,(REAL)width,(REAL)height),
+  on?Color(255,45,40,77):Color(255,24,29,41),8.f);
+ if(on){
+  Pen border(Color(255,147,122,239),1.4f);
  }
- drawLogo(g,index,RectF(REAL(r.left+7),REAL(r.top+4),REAL(r.right-r.left-14),REAL(r.bottom-r.top-11)),can);
- if(checked){
-  SolidBrush mark(Color(255,105,221,164));
-  g.FillEllipse(&mark,REAL(r.right-15),REAL(r.top+2),11.f,11.f);
+ drawLogo(g,i,RectF((REAL)(r.left+(width-31)/2),(REAL)(r.top+17),31.f,31.f),can);
+ const Color dot=online[i]?(blink?Color(255,61,230,130):Color(255,13,78,47)):configured[i]?Color(255,178,120,55):isDemo?Color(255,123,91,184):Color(255,76,82,94);
+ SolidBrush b(dot);g.FillEllipse(&b,(REAL)(r.left+7),(REAL)(r.top+5),7.f,7.f);
+ if(on){Pen border(Color(255,160,132,241),1.4f);g.DrawRectangle(&border,REAL(r.left+1),REAL(r.top+1),REAL(width-3),REAL(height-3));}
+}
+void drawGear(DRAWITEMSTRUCT* d){
+ RECT r=d->rcItem;
+ Graphics g(d->hDC);g.SetSmoothingMode(SmoothingModeAntiAlias);
+ SolidBrush bg(Color(255,29,32,46));g.FillRectangle(&bg,REAL(r.left),REAL(r.top),REAL(r.right-r.left),REAL(r.bottom-r.top));
+ REAL cx=(r.right+r.left)/2.0f,cy=(r.top+r.bottom)/2.0f;
+ Pen stroke(Color(255,164,169,191),1.4f);
+ for(int k=0;k<8;k++){
+  double a=k*3.141592653589793/4;
+  g.DrawLine(&stroke,cx+(REAL)(std::cos(a)*4),cy+(REAL)(std::sin(a)*4),cx+(REAL)(std::cos(a)*6),cy+(REAL)(std::sin(a)*6));
+ }
+ g.DrawEllipse(&stroke,cx-3.7f,cy-3.7f,7.4f,7.4f);
+ g.DrawEllipse(&stroke,cx-1,cy-1,2.f,2.f);
+}
+void drawTextButton(DRAWITEMSTRUCT* d){
+ const int id=int(d->CtlID);
+ bool sending=id==kSend,disabled=(d->itemState&ODS_DISABLED)!=0;
+ bool pressed=(d->itemState&ODS_SELECTED)!=0;
+ RECT r=d->rcItem;
+ Graphics g(d->hDC);g.SetSmoothingMode(SmoothingModeAntiAlias);
+ Color bg=sending?(disabled?Color(255,53,54,67):pressed?Color(255,98,82,167):Color(255,104,82,198)):
+      pressed?Color(255,48,50,66):Color(255,31,35,49);
+ roundedBox(g,RectF(REAL(r.left),REAL(r.top),REAL(r.right-r.left),REAL(r.bottom-r.top)),bg,6.f);
+ wchar_t text[64]{};
+ GetWindowTextW(d->hwndItem,text,64);
+ SetBkMode(d->hDC,TRANSPARENT);
+ SetTextColor(d->hDC,disabled?RGB(130,134,150):RGB(238,239,252));
+ HFONT f=(id==kSend?fontBody:fontSmall);
+ HGDIOBJ old=SelectObject(d->hDC,f);
+ DrawTextW(d->hDC,text,-1,&r,DT_CENTER|DT_VCENTER|DT_SINGLELINE|DT_NOPREFIX);
+ SelectObject(d->hDC,old);
+}
+void renderChat(const std::wstring& content){
+ if(!chatHandle||content==lastChat)return;
+ lastChat=content;
+ // RichEdit normalizes CRLF to one paragraph separator; color offsets
+ // must be computed in the same normalized text.
+ std::wstring visible=content;
+ for(size_t p=0;(p=visible.find(L"\r\n",p))!=std::wstring::npos;){visible.replace(p,2,L"\r");p++;}
+ SendMessageW(chatHandle,WM_SETREDRAW,FALSE,0);
+ SetWindowTextW(chatHandle,visible.c_str());
+ // Native RichEdit colors platform badges without a browser rendering pipeline.
+ long offset=0;
+ for(size_t i=0;i<visible.size();){
+  if(visible[i]==L'['){
+   auto e=visible.find(L']',i+1);
+   if(e!=std::wstring::npos&&e-i<22){
+    std::wstring platform=visible.substr(i+1,e-i-1);
+    COLORREF color=RGB(165,169,191);
+    if(platform==L"youtube")color=RGB(244,90,106);
+    else if(platform==L"tiktok")color=RGB(91,217,204);
+    else if(platform==L"twitch")color=RGB(172,136,249);
+    else if(platform==L"kick")color=RGB(119,216,105);
+    else if(platform==L"facebook")color=RGB(124,163,247);
+    CHARRANGE range{LONG(i),LONG(e+1)};
+    SendMessageW(chatHandle,EM_EXSETSEL,0,(LPARAM)&range);
+    CHARFORMAT2W fmt{};fmt.cbSize=sizeof(fmt);fmt.dwMask=CFM_COLOR|CFM_BOLD;fmt.dwEffects=CFE_BOLD;fmt.crTextColor=color;
+    SendMessageW(chatHandle,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&fmt);
+   }
+  }
+  auto next=visible.find(L'\r',i);
+  if(next==std::wstring::npos)break;
+  i=next+1;
+ }
+ const int len=GetWindowTextLengthW(chatHandle);
+ SendMessageW(chatHandle,EM_SETSEL,len,len);
+ SendMessageW(chatHandle,EM_SCROLLCARET,0,0);
+ SendMessageW(chatHandle,WM_SETREDRAW,TRUE,0);
+ InvalidateRect(chatHandle,nullptr,FALSE);
+}
+void showConfig(int id){
+ if(id<0||id>4)return;
+ std::wstring platform=kNames[id];
+ std::wstring instructions;
+ if(id==0)instructions=L"YouTube: conectá Google OAuth y habilitá tu emisión activa. Necesitás MULTICHAT_GOOGLE_CLIENT_ID.";
+ if(id==1)instructions=L"TikTok: configurá tu @usuario. La lectura LIVE es pública; enviar mensajes aún requiere otro adaptador.";
+ if(id==2)instructions=L"Twitch: vinculá el OAuth de dispositivo con chat:read y user:write:chat.";
+ if(id==3)instructions=L"Kick: configurá canal y credencial OAuth chat:write para enviar. El lector público no autentica la cuenta.";
+ if(id==4)instructions=L"Facebook: configurá ID de Página, token y permisos Meta. El chat depende del LIVE activo.";
+ std::wstring state=online[id]?L"Conexión verificada":configured[id]?L"Configurada, sin conexión verificada":L"Sin conectar";
+ std::wstring msg=platform+L"\n"+state+L"\n\n"+instructions+L"\n\nSí: abrir ajustes locales para editar el canal y la autorización.\nNo: "+std::wstring(id==0||id==2?L"vincular OAuth de esta plataforma":L"cerrar");
+ int choice=MessageBoxW(windowHandle,msg.c_str(),L"Configurar plataforma",MB_YESNOCANCEL|MB_ICONINFORMATION);
+ if(choice==IDYES){
+  const std::wstring sample=appDirectory+L"\\config.solarispkn.example.json";
+  const std::wstring custom=appDirectory+L"\\NativeUI\\config.local.json";
+  if(GetFileAttributesW(custom.c_str())==INVALID_FILE_ATTRIBUTES){
+   if(GetFileAttributesW(sample.c_str())!=INVALID_FILE_ATTRIBUTES)CopyFileW(sample.c_str(),custom.c_str(),TRUE);
+  }
+  if(GetFileAttributesW(custom.c_str())==INVALID_FILE_ATTRIBUTES){MessageBoxW(windowHandle,L"No se encontró la plantilla de configuración.",L"MultiChat",MB_OK|MB_ICONERROR);return;}
+  std::wstring params=L"\""+custom+L"\"";
+  ShellExecuteW(windowHandle,L"open",L"notepad.exe",params.c_str(),nullptr,SW_SHOWNORMAL);
+  result(L"Configuración guardada al editar; se aplica al reiniciar el motor en modo real.");
+ }
+ else if(choice==IDNO&&(id==0||id==2)){
+  const std::wstring exe=appDirectory+L"\\MultiChat-native-engine.exe";
+  const wchar_t* flag=id==0?L"-link-google":L"-link-twitch";
+  std::wstring command=L"\""+exe+L"\" "+flag;
+  std::vector<wchar_t> args(command.begin(),command.end());args.push_back(L'\0');
+  STARTUPINFOW si{};si.cb=sizeof(si);
+  PROCESS_INFORMATION pi{};
+  if(CreateProcessW(exe.c_str(),args.data(),nullptr,nullptr,FALSE,CREATE_NEW_CONSOLE,nullptr,appDirectory.c_str(),&si,&pi)){
+   CloseHandle(pi.hThread);CloseHandle(pi.hProcess);
+   result(L"Autorización iniciada. Revisá el diálogo externo.");
+  }else MessageBoxW(windowHandle,L"No se pudo iniciar OAuth. Revisá el ejecutable del motor.",L"MultiChat",MB_OK|MB_ICONERROR);
  }
 }
-void setFont(HWND hwnd,HFONT f){SendMessageW(hwnd,WM_SETFONT,(WPARAM)f,TRUE);}
-HWND createChild(const wchar_t *cls,const wchar_t *txt,DWORD style,int id){
- HWND h=CreateWindowExW(0,cls,txt,WS_CHILD|WS_VISIBLE|style,0,0,0,0,windowHandle,(HMENU)(INT_PTR)id,instance,nullptr);
- if(h)setFont(h,fontNormal);return h;
-}
-std::wstring applicationPath(){
- wchar_t path[MAX_PATH]{};
- GetModuleFileNameW(nullptr,path,MAX_PATH);
- std::wstring p(path);
- auto i=p.find_last_of(L"\\/");
- return i==std::wstring::npos?L"." : p.substr(0,i);
-}
-bool alreadyRunning(){
- return request(L"GET",L"/health").status==200;
+void placeControls(){
+ if(!windowHandle)return;
+ RECT r{};GetClientRect(windowHandle,&r);
+ int w=std::max(310,int(r.right)),h=std::max(480,int(r.bottom));
+ const int pad=12,inner=w-2*pad;
+ MoveWindow(minusButton,w-77,13,27,25,TRUE);
+ MoveWindow(plusButton,w-44,13,27,25,TRUE);
+ MoveWindow(statusHandle,pad,44,inner,22,TRUE);
+ const int bottom=h-246;
+ MoveWindow(chatHandle,pad,75,inner,std::max(135,bottom-75),TRUE);
+ const int toggleY=h-212;
+ MoveWindow(allButton,w-160,toggleY,72,22,TRUE);
+ MoveWindow(noneButton,w-85,toggleY,73,22,TRUE);
+ const int iconY=h-185,cell=inner/5;
+ for(int i=0;i<5;i++){
+  int x=pad+i*cell;
+  int width=(i==4?inner-i*cell:cell)-5;
+  MoveWindow(icons[i],x,iconY,width,59,TRUE);
+  MoveWindow(gears[i],x+width-20,iconY+2,18,18,TRUE);
+ }
+ MoveWindow(messageHandle,pad,h-104,inner,37,TRUE);
+ MoveWindow(sendButton,pad,h-59,inner,29,TRUE);
+ MoveWindow(resultHandle,pad,h-26,inner,20,TRUE);
+ InvalidateRect(windowHandle,nullptr,TRUE);
 }
 void startBackend(){
- if(alreadyRunning())return;
- std::wstring exe=appDirectory+L"\\MultiChat-native-engine.exe";
- std::wstring cfg=appDirectory+L"\\NativeUI\\demo-config.json";
- if(GetFileAttributesW(exe.c_str())==INVALID_FILE_ATTRIBUTES){return;}
- std::wstring args=L"\""+exe+L"\" -config \""+cfg+L"\" -demo -quiet";
+ if(request(L"GET",L"/health").status==200)return;
+ const std::wstring exe=appDirectory+L"\\MultiChat-native-engine.exe";
+ const std::wstring cfg=appDirectory+L"\\NativeUI\\demo-config.json";
+ if(GetFileAttributesW(exe.c_str())==INVALID_FILE_ATTRIBUTES)return;
+ std::wstring command=L"\""+exe+L"\" -config \""+cfg+L"\" -demo -quiet";
  STARTUPINFOW si{};si.cb=sizeof(si);
  PROCESS_INFORMATION pi{};
- std::vector<wchar_t> mutableArgs(args.begin(),args.end());mutableArgs.push_back(0);
- if(CreateProcessW(exe.c_str(),mutableArgs.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW,nullptr,appDirectory.c_str(),&si,&pi)){
+ std::vector<wchar_t> args(command.begin(),command.end());args.push_back(0);
+ if(CreateProcessW(exe.c_str(),args.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW,nullptr,appDirectory.c_str(),&si,&pi)){
   CloseHandle(pi.hThread);CloseHandle(pi.hProcess);
  }
 }
-void layout(){
- RECT r{};GetClientRect(windowHandle,&r);
- const int w=r.right,h=r.bottom,left=w/3;
- const int inner=left-32;
- // All controls fit vertically with no overlap, even on a 1366x768 screen.
- MoveWindow(chatHandle,16,105,inner,std::max(100,h-398),TRUE);
- const int selectorY=h-222;
- for(int i=0;i<5;i++)MoveWindow(iconButtons[i],16+i*(inner/5),selectorY,inner/5-5,49,TRUE);
- MoveWindow(allButton,16,h-252,(inner-8)/2,26,TRUE);
- MoveWindow(noneButton,24+(inner-8)/2,h-252,(inner-8)/2,26,TRUE);
- MoveWindow(messageHandle,16,h-144,inner,44,TRUE);
- MoveWindow(sendButton,16,h-90,inner,34,TRUE);
- MoveWindow(resultHandle,16,h-51,inner,43,TRUE);
- MoveWindow(statusHandle,16,61,inner,22,TRUE);
-}
-void updateStatus(const PollState &state){
- if(state.targets.status!=200){
-  isDemo=false;
-  for(int i=0;i<5;i++)ready[i]=false;
-  if(statusHandle)SetWindowTextW(statusHandle,L"○ Conectando al motor de chats…");
- }else{
-  isDemo=hasJSONValue(state.targets.body,"mode","demo");
-  bool live=hasJSONValue(state.targets.body,"mode","live");
-  for(int i=0;i<5;i++)ready[i]=jsonBoolAtPlatform(state.targets.body,kPlatformKeys[i]);
-  if(statusHandle)SetWindowTextW(statusHandle,isDemo?L"◆ DEMO — no publica en Internet":live?L"● Chat conectado · envío bajo autorización":L"○ Envío real desactivado");
- }
- redrawIcons();
-}
-LRESULT CALLBACK windowProcedure(HWND window,UINT msg,WPARAM wp,LPARAM lp){
+LRESULT CALLBACK procedure(HWND hWnd,UINT msg,WPARAM wp,LPARAM lp){
  switch(msg){
  case WM_CREATE:{
-  windowHandle=window;
-  brushDark=CreateSolidBrush(RGB(18,20,31));
-  brushEdit=CreateSolidBrush(RGB(24,26,39));
-  fontNormal=CreateFontW(-17,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Segoe UI");
-  fontStrong=CreateFontW(-19,0,0,0,FW_BOLD,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Segoe UI");
-  fontSmall=CreateFontW(-14,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Segoe UI");
-  statusHandle=createChild(L"STATIC",L"○ Iniciando MultiChat…",SS_LEFT,kStatus);
-  setFont(statusHandle,fontSmall);
-  chatHandle=createChild(L"EDIT",L"Conectando…",ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL|WS_VSCROLL|WS_BORDER,kChat);
-  messageHandle=createChild(L"EDIT",L"",ES_MULTILINE|ES_AUTOVSCROLL|WS_BORDER,kMessage);
+  windowHandle=hWnd;
+  brushBackground=CreateSolidBrush(RGB(15,18,28));
+  brushInput=CreateSolidBrush(RGB(24,28,41));
+  fontPixels=std::clamp(int(GetPrivateProfileIntW(L"UI",L"font_pixels",13,preferencesPath.c_str())),10,19);
+  LoadLibraryW(L"Msftedit.dll");
+  chatHandle=child(MSFTEDIT_CLASS,L"",ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL|WS_VSCROLL|WS_BORDER,kChat);
+  SendMessageW(chatHandle,EM_SETBKGNDCOLOR,0,RGB(23,27,40));
+  messageHandle=child(L"EDIT",L"",ES_MULTILINE|ES_AUTOVSCROLL|WS_BORDER,kMessage);
   SendMessageW(messageHandle,EM_LIMITTEXT,200,0);
   for(int i=0;i<5;i++){
-   iconButtons[i]=createChild(L"BUTTON",kPlatformNames[i],BS_OWNERDRAW|WS_TABSTOP,kIconBase+i);
+   icons[i]=child(L"BUTTON",kNames[i],BS_OWNERDRAW|WS_TABSTOP,kIconBase+i);
+   gears[i]=child(L"BUTTON",L"Configurar",BS_OWNERDRAW|WS_TABSTOP,kGearBase+i);
   }
-  allButton=createChild(L"BUTTON",L"Seleccionar todas",BS_PUSHBUTTON,kAll);
-  noneButton=createChild(L"BUTTON",L"Deseleccionar todas",BS_PUSHBUTTON,kNone);
-  setFont(allButton,fontSmall);setFont(noneButton,fontSmall);
-  sendButton=createChild(L"BUTTON",L"Enviar mensaje / comando",BS_DEFPUSHBUTTON,kSend);
-  resultHandle=createChild(L"STATIC",resultText.c_str(),SS_LEFT,kResult);
-  setFont(resultHandle,fontSmall);
-  layout();
-  enableSend();
-  SetTimer(window,1,1800,nullptr);
+  allButton=child(L"BUTTON",L"Todas",BS_OWNERDRAW,kAll);
+  noneButton=child(L"BUTTON",L"Ninguna",BS_OWNERDRAW,kNone);
+  minusButton=child(L"BUTTON",L"A−",BS_OWNERDRAW,kFontMinus);
+  plusButton=child(L"BUTTON",L"A+",BS_OWNERDRAW,kFontPlus);
+  sendButton=child(L"BUTTON",L"Enviar mensaje / comando",BS_OWNERDRAW,kSend);
+  statusHandle=child(L"STATIC",L"Sin conectar · esperando motor",SS_LEFT,kStatus);
+  resultHandle=child(L"STATIC",resultText.c_str(),SS_LEFT,kResult);
+  rebuildFonts();
+  placeControls();
+  canSend();
+  SetTimer(hWnd,1,1600,nullptr);
+  SetTimer(hWnd,2,550,nullptr);
   startBackend();
-  pollAsync(window);
+  beginPoll(hWnd);
+  return 0;
+ }
+ case WM_SIZE:placeControls();return 0;
+ case WM_GETMINMAXINFO:{
+  auto *info=(MINMAXINFO*)lp;
+  info->ptMinTrackSize.x=350;info->ptMinTrackSize.y=500;
   return 0;
  }
  case WM_COMMAND:{
   int id=LOWORD(wp);
   if(id>=kIconBase&&id<kIconBase+5&&HIWORD(wp)==BN_CLICKED){
-   int idx=id-kIconBase;
-   if(ready[idx])selected[idx]=!selected[idx];
+   int p=id-kIconBase;
+   if(sendReady[p])selected[p]=!selected[p];
    redrawIcons();return 0;
   }
-  if(id==kAll&&HIWORD(wp)==BN_CLICKED){
-   for(int i=0;i<5;i++)selected[i]=ready[i];
-   redrawIcons();return 0;
+  if(id>=kGearBase&&id<kGearBase+5&&HIWORD(wp)==BN_CLICKED){showConfig(id-kGearBase);return 0;}
+  if(id==kAll&&HIWORD(wp)==BN_CLICKED){for(int i=0;i<5;i++)selected[i]=sendReady[i];redrawIcons();return 0;}
+  if(id==kNone&&HIWORD(wp)==BN_CLICKED){for(int i=0;i<5;i++)selected[i]=false;redrawIcons();return 0;}
+  if(id==kSend&&HIWORD(wp)==BN_CLICKED){beginSend();return 0;}
+  if(id==kMessage&&HIWORD(wp)==EN_CHANGE){canSend();return 0;}
+  if((id==kFontMinus||id==kFontPlus)&&HIWORD(wp)==BN_CLICKED){
+   fontPixels=std::clamp(fontPixels+(id==kFontPlus?1:-1),10,19);
+   rebuildFonts();saveFont();return 0;
   }
-  if(id==kNone&&HIWORD(wp)==BN_CLICKED){
-   for(int i=0;i<5;i++)selected[i]=false;
-   redrawIcons();return 0;
-  }
-  if(id==kSend&&HIWORD(wp)==BN_CLICKED){sendNow();return 0;}
-  if(id==kMessage&&HIWORD(wp)==EN_CHANGE){enableSend();return 0;}
   return 0;
  }
  case WM_TIMER:
-  if(wp==1)pollAsync(window);
+  if(wp==1)beginPoll(hWnd);
+  if(wp==2){blink=!blink;for(int i=0;i<5;i++)if(online[i])InvalidateRect(icons[i],nullptr,FALSE);}
   return 0;
  case kPollMessage:{
-  std::unique_ptr<PollState> state((PollState*)lp);
-  if(state->feed.status==200){
-   std::wstring feed=utf8ToWide(state->feed.body);
-   if(feed!=lastChat){
-    lastChat=feed;
-    SetWindowTextW(chatHandle,feed.c_str());
-    int length=GetWindowTextLengthW(chatHandle);
-    SendMessageW(chatHandle,EM_SETSEL,length,length);
-    SendMessageW(chatHandle,EM_SCROLLCARET,0,0);
-   }
+  std::unique_ptr<PollState> payload((PollState*)lp);
+  if(payload->chat.status==200)renderChat(wideUTF8(payload->chat.body));
+  if(payload->targets.status==200){
+   isDemo=jsonString(payload->targets.body,"mode","demo");
+   for(int i=0;i<5;i++)sendReady[i]=jsonFieldFor(payload->targets.body,kKeys[i],"ready");
+  }else{
+   isDemo=false;for(int i=0;i<5;i++)sendReady[i]=false;
   }
-  updateStatus(*state);
-  return 0;
+  if(payload->connection.status==200){
+   obsStreaming=payload->connection.body.find("\"streaming\":true")!=std::string::npos;
+   for(int i=0;i<5;i++){
+    online[i]=jsonFieldFor(payload->connection.body,kKeys[i],"online");
+    configured[i]=jsonFieldFor(payload->connection.body,kKeys[i],"configured");
+   }
+  }else{
+   obsStreaming=false;for(int i=0;i<5;i++){online[i]=false;configured[i]=false;}
+  }
+  if(statusHandle){
+   std::wstring s=isDemo?L"DEMO · sin publicar":payload->targets.status==200?L"Conectado · "+std::wstring(obsStreaming?L"OBS EN VIVO":L"OBS en espera"):L"Motor desconectado";
+   SetWindowTextW(statusHandle,s.c_str());
+  }
+  redrawIcons();return 0;
  }
  case kSentMessage:{
-  std::unique_ptr<HTTPResult> answer((HTTPResult*)lp);
+  std::unique_ptr<HTTPResult> output((HTTPResult*)lp);
   sendBusy=false;
-  if(answer->status!=200){
-   setResult(L"Error del motor de envío (HTTP "+std::to_wstring(answer->status)+L"). No se reintentó.");
+  if(output->status!=200){
+   result(L"Error HTTP "+std::to_wstring(output->status)+L". No se reintentó.");
   }else{
-   auto &json=answer->body;
-   int simulated=0,accepted=0,failed=0,unavailable=0;
+   int simulated=0,accepted=0,unavailable=0,errors=0;
+   const std::string& json=output->body;
    size_t p=0;
    while((p=json.find("\"status\":\"",p))!=std::string::npos){
     p+=10;
     auto end=json.find('"',p);
     if(end==std::string::npos)break;
-    std::string s=json.substr(p,end-p);p=end+1;
-    if(s=="simulated")simulated++;
-    else if(s=="accepted")accepted++;
-    else if(s=="unavailable")unavailable++;
-    else failed++;
+    const std::string value=json.substr(p,end-p);p=end+1;
+    if(value=="simulated")simulated++;
+    else if(value=="accepted")accepted++;
+    else if(value=="unavailable")unavailable++;
+    else errors++;
    }
-   if(isDemo)setResult(L"DEMO: "+std::to_wstring(simulated)+L" envío(s) simulados. Nada publicado.");
-   else setResult(L"API aceptó "+std::to_wstring(accepted)+L"; no disponible "+std::to_wstring(unavailable)+L"; errores "+std::to_wstring(failed)+L".");
+   if(isDemo)result(L"DEMO: "+std::to_wstring(simulated)+L" simulado(s), ninguno publicado.");
+   else result(L"Aceptados "+std::to_wstring(accepted)+L" · sin permisos "+std::to_wstring(unavailable)+L" · error "+std::to_wstring(errors));
   }
-  enableSend();
-  return 0;
+  canSend();return 0;
  }
- case WM_DRAWITEM:drawIconButton((DRAWITEMSTRUCT*)lp);return TRUE;
- case WM_CTLCOLOREDIT:
+ case WM_DRAWITEM:{
+  auto *item=(DRAWITEMSTRUCT*)lp;
+  int id=int(item->CtlID);
+  if(id>=kIconBase&&id<kIconBase+5)drawIcon(item);
+  else if(id>=kGearBase&&id<kGearBase+5)drawGear(item);
+  else drawTextButton(item);
+  return TRUE;
+ }
+ case WM_CTLCOLOREDIT:{
+  HDC dc=(HDC)wp;SetTextColor(dc,textColor);SetBkColor(dc,RGB(24,28,41));
+  return (LRESULT)brushInput;
+ }
  case WM_CTLCOLORSTATIC:{
-  HDC hdc=(HDC)wp;
-  SetTextColor(hdc,textColor);
-  SetBkColor(hdc,RGB(18,20,31));
-  return (LRESULT)brushDark;
+  HDC dc=(HDC)wp;SetTextColor(dc,RGB(178,185,205));SetBkColor(dc,RGB(15,18,28));
+  return (LRESULT)brushBackground;
  }
- case WM_ERASEBKGND:return 1;
+ case WM_ERASEBKGND:return TRUE;
  case WM_PAINT:{
-  PAINTSTRUCT ps{};HDC hdc=BeginPaint(window,&ps);
-  RECT r{};GetClientRect(window,&r);
-  int left=r.right/3;
-  RECT a{0,0,left,r.bottom},b{left,0,r.right,r.bottom},border{left-1,0,left,r.bottom};
-  colorBackground(hdc,a,RGB(17,19,29));
-  colorBackground(hdc,b,RGB(13,15,23));  // remaining 2/3 intentionally empty
-  colorBackground(hdc,border,RGB(48,46,63));
-  SetBkMode(hdc,TRANSPARENT);
-  SetTextColor(hdc,RGB(237,234,250));
-  HGDIOBJ old=SelectObject(hdc,fontStrong);
-  TextOutW(hdc,16,18,L"✦ SolarisPKN MultiChat",21);
-  TextOutW(hdc,16,91,L"CHAT",4);
-  TextOutW(hdc,16,r.bottom-282,L"PLATAFORMAS DE ENVÍO",21);
-  TextOutW(hdc,16,r.bottom-165,L"MENSAJE / COMANDO",17);
-  SelectObject(hdc,old);
-  EndPaint(window,&ps);
+  PAINTSTRUCT ps{};HDC dc=BeginPaint(hWnd,&ps);
+  RECT r{};GetClientRect(hWnd,&r);
+  paintBackground(dc,r,RGB(15,18,28));
+  RECT header={0,0,r.right,73};paintBackground(dc,header,RGB(20,24,37));
+  RECT divider={0,72,r.right,73};paintBackground(dc,divider,RGB(46,52,72));
+  SetBkMode(dc,TRANSPARENT);SetTextColor(dc,RGB(230,233,249));
+  HGDIOBJ old=SelectObject(dc,fontHeading);
+  const wchar_t* title=L"✦ MultiChat";
+  TextOutW(dc,12,13,title,(int)wcslen(title));
+  SelectObject(dc,fontSmall);
+  const wchar_t* opts=L"DESTINOS";
+  TextOutW(dc,12,r.bottom-211,opts,(int)wcslen(opts));
+  const wchar_t* inputLabel=L"MENSAJE / COMANDO";
+  TextOutW(dc,12,r.bottom-123,inputLabel,(int)wcslen(inputLabel));
+  SelectObject(dc,old);
+  EndPaint(hWnd,&ps);
   return 0;
  }
- case WM_CLOSE:
-  DestroyWindow(window);return 0;
- case WM_DESTROY:
-  KillTimer(window,1);
-  if(fontNormal)DeleteObject(fontNormal);
-  if(fontStrong)DeleteObject(fontStrong);
-  if(fontSmall)DeleteObject(fontSmall);
-  if(brushDark)DeleteObject(brushDark);
-  if(brushEdit)DeleteObject(brushEdit);
+ case WM_CLOSE:DestroyWindow(hWnd);return 0;
+ case WM_DESTROY:{
+  KillTimer(hWnd,1);KillTimer(hWnd,2);
+  if(fontBody)DeleteObject(fontBody);if(fontHeading)DeleteObject(fontHeading);if(fontSmall)DeleteObject(fontSmall);
+  if(brushBackground)DeleteObject(brushBackground);if(brushInput)DeleteObject(brushInput);
   PostQuitMessage(0);return 0;
  }
- return DefWindowProcW(window,msg,wp,lp);
+ }
+ return DefWindowProcW(hWnd,msg,wp,lp);
 }
 } // namespace
 
 int APIENTRY wWinMain(HINSTANCE app,HINSTANCE,LPWSTR,int show){
- instance=app;
- appDirectory=applicationPath();
+ instance=app;appDirectory=appPath();preferencesPath=appDirectory+L"\\NativeUI\\preferences.ini";
+ SetProcessDPIAware();
  GdiplusStartupInput input{};
- ULONG_PTR gdiplusToken=0;
- if(GdiplusStartup(&gdiplusToken,&input,nullptr)!=Ok)return 3;
- WNDCLASSW wc{};
- wc.lpfnWndProc=windowProcedure;
- wc.hInstance=app;
- wc.lpszClassName=L"SolarisPKNMultiChatNative_v1";
- wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);
- wc.hIcon=LoadIconW(nullptr,IDI_APPLICATION);
- if(!RegisterClassW(&wc)){GdiplusShutdown(gdiplusToken);return 4;}
+ ULONG_PTR token=0;
+ if(GdiplusStartup(&token,&input,nullptr)!=Ok)return 3;
+ WNDCLASSW wc{};wc.lpfnWndProc=procedure;wc.hInstance=app;wc.lpszClassName=L"SolarisPKNMultiChatCompact_v2";
+ wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hIcon=LoadIconW(nullptr,IDI_APPLICATION);
+ if(!RegisterClassW(&wc)){GdiplusShutdown(token);return 4;}
  RECT work{};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);
- int desiredW=std::min<int>(1200,int(work.right-work.left)-36);
- int desiredH=desiredW*9/16;
- RECT frame{0,0,desiredW,desiredH};
- const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX;
- AdjustWindowRectEx(&frame,style,FALSE,0);
- while(frame.bottom-frame.top>(work.bottom-work.top-10)&&desiredW>760){
-  desiredW-=16;desiredH=desiredW*9/16;
-  frame={0,0,desiredW,desiredH};AdjustWindowRectEx(&frame,style,FALSE,0);
- }
- int outerW=frame.right-frame.left,outerH=frame.bottom-frame.top;
- int x=work.left+((work.right-work.left)-outerW)/2,y=work.top+((work.bottom-work.top)-outerH)/2;
- HWND wnd=CreateWindowExW(0,wc.lpszClassName,L"SolarisPKN MultiChat · Nativo",style,x,y,outerW,outerH,nullptr,nullptr,app,nullptr);
- if(!wnd){GdiplusShutdown(gdiplusToken);return 5;}
+ const int availableW=int(work.right-work.left),availableH=int(work.bottom-work.top);
+ // One-third-screen *width*, vertical chat format, not a full 16:9 suite window.
+ const int clientW=std::clamp(availableW/3,350,520);
+ // Account for Windows caption/border so the send button stays on screen.
+ const int clientH=std::clamp(int(clientW*1.45),460,std::max(460,availableH-65));
+ const DWORD style=WS_OVERLAPPEDWINDOW;
+ RECT outer{0,0,clientW,clientH};AdjustWindowRectEx(&outer,style,FALSE,0);
+ const int totalW=int(outer.right-outer.left),totalH=int(outer.bottom-outer.top);
+ const int x=work.right-totalW-12,y=work.top+std::max(4,(availableH-totalH)/2);
+ HWND wnd=CreateWindowExW(0,wc.lpszClassName,L"SolarisPKN MultiChat · Compacto",style,
+  x,y,totalW,totalH,nullptr,nullptr,app,nullptr);
+ if(!wnd){GdiplusShutdown(token);return 5;}
  ShowWindow(wnd,show);UpdateWindow(wnd);
- MSG msg{};
- while(GetMessageW(&msg,nullptr,0,0)>0){
-  TranslateMessage(&msg);DispatchMessageW(&msg);
- }
- GdiplusShutdown(gdiplusToken);
- return int(msg.wParam);
+ MSG m{};while(GetMessageW(&m,nullptr,0,0)>0){TranslateMessage(&m);DispatchMessageW(&m);}
+ GdiplusShutdown(token);return (int)m.wParam;
 }

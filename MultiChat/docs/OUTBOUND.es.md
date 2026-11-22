@@ -1,8 +1,8 @@
 # SolarisPKN MultiChat — Centro de envíos multiplataforma
 
-## Ventana
+## Integración actual
 
-Abrí el visor de MultiChat en http://127.0.0.1:8765/ y pulsá **Enviar / Comandos**. Se abre una ventana independiente en `/compose`. También podés usar http://127.0.0.1:8765/compose directamente.
+La interfaz principal ahora es **MultiChat-Native.exe**, una única ventana compacta con chat, íconos de plataformas y caja de comandos integrada. **Ya no se abre otra ventana para enviar**. La página web anterior `http://127.0.0.1:8765/compose` se conserva solo como herramienta opcional de diagnóstico, fuera del flujo nativo. La edición de permisos de escritura aún requiere OAuth/configuración autorizada.
 
 Cada plataforma tiene **checkbox** y un botón **Solo**. La ventana incluye **Seleccionar todas**, **Deseleccionar todas**, contador, vista previa del mensaje, control de hasta 200 caracteres Unicode, envío y resultados por plataforma.
 
@@ -16,7 +16,8 @@ Los envíos están **desactivados por defecto**. Para habilitarlos explícitamen
 "panel_auth": {
   "enabled": true,
   "token_env": "MULTICHAT_PANEL_TOKEN",
-  "obs_token_env": "MULTICHAT_OBS_TOKEN"
+  "obs_token_env": "MULTICHAT_OBS_TOKEN",
+  "native_token_env": "MULTICHAT_NATIVE_TOKEN"
 },
 "outbound": {
   "enabled": true,

@@ -30,6 +30,7 @@ func twitchLoop(ctx context.Context, c TwitchConfig, hub *Hub, logf func(string,
 	}
 }
 func twitchSession(ctx context.Context, c TwitchConfig, hub *Hub) error {
+	defer hub.clearConnection("twitch")
 	d := &net.Dialer{Timeout: 10 * time.Second, KeepAlive: 20 * time.Second}
 	raw, err := tls.DialWithDialer(d, "tcp", "irc.chat.twitch.tv:6697", &tls.Config{MinVersion: tls.VersionTLS12, ServerName: "irc.chat.twitch.tv"})
 	if err != nil {
@@ -71,7 +72,11 @@ func twitchSession(ctx context.Context, c TwitchConfig, hub *Hub) error {
 		if strings.Contains(line, "Login authentication failed") || strings.Contains(line, "Improperly formatted auth") {
 			return errors.New("Twitch OAuth rejected")
 		}
+		if strings.Contains(line, " 366 ") && strings.Contains(line, " #"+channel+" ") {
+			hub.setConnection("twitch", channel, 4*time.Minute)
+		}
 		if m, ok := parseTwitchLine(line); ok {
+			hub.setConnection("twitch", channel, 4*time.Minute)
 			hub.publish(m)
 		}
 	}

@@ -33,6 +33,8 @@ func newHandler(h *Hub, c Config) http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "history_count": len(h.snapshot()), "configured": map[string]bool{"twitch": c.Twitch.Enabled, "youtube": c.YouTube.Enabled, "tiktok": c.TikTok.Enabled, "kick": c.Kick.Enabled, "facebook": c.Facebook.Enabled, "rumble": c.Rumble.Enabled, "ingest": c.Ingest.Enabled}})
 	})
+	mux.HandleFunc("GET /api/native/status", h.serveNativeStatus(c))
+	mux.HandleFunc("POST /api/obs/event", h.serveOBSEvent(c))
 	mux.HandleFunc("GET /auth/providers", func(w http.ResponseWriter, r *http.Request) {
 		// Report configuration and locally saved credentials, NOT remote login or LIVE status.
 		_, googleErr := loadGoogleCredentials()

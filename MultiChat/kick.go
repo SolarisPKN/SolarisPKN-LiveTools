@@ -145,6 +145,7 @@ func kickRealtimeCredentials(ctx context.Context, client *http.Client, id string
 	return endpoint, auth.Data.Token, nil
 }
 func kickWebsocketSession(ctx context.Context, endpoint, token, room string, h *Hub) error {
+	defer h.clearConnection("kick")
 	dialer := websocket.Dialer{HandshakeTimeout: 10 * time.Second, ReadBufferSize: 4096}
 	conn, _, err := dialer.DialContext(ctx, endpoint, http.Header{"Origin": []string{"https://kick.com"}})
 	if err != nil {
@@ -209,8 +210,10 @@ func kickWebsocketSession(ctx context.Context, endpoint, token, room string, h *
 			}
 			if frame.ID == 2 && len(frame.Subscribe) > 0 {
 				subscribed = true
+				h.setConnection("kick", room, 4*time.Minute)
 			}
 			if frame.Push != nil && frame.Push.Pub != nil {
+				h.setConnection("kick", room, 4*time.Minute)
 				d := frame.Push.Pub.Data
 				payload := d.Data
 				// Kick wraps event data as a JSON string within the Centrifugo publication.

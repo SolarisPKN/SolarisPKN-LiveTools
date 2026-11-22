@@ -4,11 +4,15 @@ Chat unificado local en Go, sin Electron ni un navegador por plataforma. Conecto
 
 ## Interfaz nativa Windows (recomendada)
 
-El visor principal ahora es **`MultiChat-Native.exe`**: una sola ventana **16:9**, implementada con Win32/GDI+ y sin navegador integrado. El tercio izquierdo contiene chat y caja de comandos, con los cinco selectores vectoriales de plataforma justo encima; el resto **2/3 está intencionalmente vacío**, reservado para futuras decisiones. Icono gris = no disponible para enviar; color = habilitado en el modo actual; resalte = seleccionado.
+El visor principal es **`MultiChat-Native.exe`**: una ventana lateral **vertical compacta de aproximadamente 1/3 del ancho de pantalla**, hecha con Win32/GDI+ (sin navegador). **El futuro panel 16:9 es SolarisPKN-LiveTools, no MultiChat**. El chat y el cuadro de comandos comparten la única ventana; encima hay cinco íconos vectoriales con engranaje de configuración. Ícono gris = envío no habilitado, color = envío habilitado (en demo, solo simulado), LED verde parpadeante = conexión real verificada con la plataforma. Incluye **A−/A+** para ajustar y guardar tamaño de fuente.
 
-Está preparada una demo completamente local sin credenciales: el frontend Win32 utiliza `MultiChat-commands-preview.exe` (motor Go oculto) y la configuración `NativeUI/demo-config.json` en el puerto 8766. No requiere cerrar ni cambiar el antiguo visor web de diagnóstico en 8765. Las autorizaciones reales de plataformas siguen pendientes.
+Está preparada una demo completamente local sin credenciales: el frontend Win32 utiliza `MultiChat-native-engine.exe` (motor Go oculto) y la configuración `NativeUI/demo-config.json` en el puerto 8766. No requiere cerrar ni cambiar el antiguo visor web de diagnóstico en 8765. Las autorizaciones reales de plataformas siguen pendientes.
 
-**Código fuente, compilación, especificación exacta del layout y límites:** [NativeUI/README.es.md](NativeUI/README.es.md). Los SVG fuente de cada plataforma están en `NativeUI/assets`; las siluetas se dibujan con GDI+ para no cargar ningún motor de navegador.
+**Código fuente, compilación y límites:** [NativeUI/README.es.md](NativeUI/README.es.md). Los SVG fuente de cada plataforma están en `NativeUI/assets`; las siluetas se dibujan con GDI+ para no cargar ningún motor de navegador.
+
+## Integración OBS y estados por plataforma
+
+La integración **OBS WebSocket v5 integrado** está en el motor Go, sin nueva DLL. Puede detectar el inicio, parada y servicio de streaming, así como reconectar y buscar el chat de la plataforma asociada. El módulo nativo C++ de OBS también cuenta con los callbacks y un puente de eventos, pero todavía requiere compilación e instalación con el SDK de OBS. Toda la actividad real queda desactivada en demo. **[Manual de OBS](docs/OBS-INTEGRATION.es.md)**.
 
 ## Plataformas (prioridad 21/11/2026)
 

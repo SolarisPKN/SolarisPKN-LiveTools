@@ -11,6 +11,7 @@ import (
 type Config struct {
 	PanelAuth    PanelAuthConfig `json:"panel_auth"`
 	Outbound     OutboundConfig  `json:"outbound"`
+	OBS          OBSConfig       `json:"obs"`
 	Demo         bool            `json:"-"`
 	Listen       string          `json:"listen"`
 	HistoryLimit int             `json:"history_limit"`
@@ -65,9 +66,10 @@ type IngestConfig struct {
 	TokenEnv string `json:"token_env"`
 }
 type PanelAuthConfig struct {
-	Enabled     bool   `json:"enabled"`
-	TokenEnv    string `json:"token_env"`
-	OBSTokenEnv string `json:"obs_token_env"`
+	Enabled        bool   `json:"enabled"`
+	TokenEnv       string `json:"token_env"`
+	OBSTokenEnv    string `json:"obs_token_env"`
+	NativeTokenEnv string `json:"native_token_env"`
 }
 
 func readConfig(path string) (Config, error) {
@@ -101,6 +103,35 @@ func readConfig(path string) (Config, error) {
 				return c, errors.New("panel_auth: obs_token_env must be at least 32 characters and different from the panel token")
 			}
 		}
+	}
+	if c.PanelAuth.Enabled && c.PanelAuth.NativeTokenEnv != "" {
+		nativeKey := os.Getenv(c.PanelAuth.NativeTokenEnv)
+		if len(nativeKey) < 32 || nativeKey == os.Getenv(c.PanelAuth.TokenEnv) || (c.PanelAuth.OBSTokenEnv != "" && nativeKey == os.Getenv(c.PanelAuth.OBSTokenEnv)) {
+			return c, errors.New("panel_auth: native_token_env must be at least 32 characters and different from other tokens")
+		}
+	}
+	if c.OBS.Enabled && c.OBS.WebSocketEnabled {
+		if c.OBS.WebSocketPort == 0 {
+			c.OBS.WebSocketPort = 4455
+		}
+		if c.OBS.WebSocketPort < 1024 || c.OBS.WebSocketPort > 65535 {
+			return c, errors.New("obs: websocket_port must be a valid local port")
+		}
+		if c.OBS.WebSocketPasswordEnv != "" && os.Getenv(c.OBS.WebSocketPasswordEnv) == "" {
+			return c, errors.New("obs: websocket_password_env was set but its value is missing")
+		}
+	}
+	if c.OBS.Enabled && !c.OBS.WebSocketEnabled && (c.OBS.TokenEnv == "" || len(os.Getenv(c.OBS.TokenEnv)) < 32) {
+		return c, errors.New("obs: token_env requires a separate secret of 32 or more characters")
+	}
+	if c.OBS.Enabled && !c.OBS.WebSocketEnabled && c.OBS.TokenEnv != "" && len(os.Getenv(c.OBS.TokenEnv)) < 32 {
+		return c, errors.New("obs: token_env is set but the event secret is missing or too short")
+	}
+	if c.OBS.Enabled && c.PanelAuth.Enabled && c.PanelAuth.NativeTokenEnv != "" && os.Getenv(c.OBS.TokenEnv) == os.Getenv(c.PanelAuth.NativeTokenEnv) {
+		return c, errors.New("obs: event token must differ from native UI token")
+	}
+	if c.OBS.Enabled && c.PanelAuth.Enabled && c.OBS.TokenEnv == c.PanelAuth.TokenEnv {
+		return c, errors.New("obs: event token must not reuse the panel token")
 	}
 	if c.Outbound.Enabled && !c.PanelAuth.Enabled {
 		return c, errors.New("outbound: panel_auth must be enabled before real chat sending")

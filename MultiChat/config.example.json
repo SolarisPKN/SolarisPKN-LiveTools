@@ -46,11 +46,21 @@
   "panel_auth": {
     "enabled": false,
     "token_env": "MULTICHAT_PANEL_TOKEN",
-    "obs_token_env": "MULTICHAT_OBS_TOKEN"
+    "obs_token_env": "MULTICHAT_OBS_TOKEN",
+    "native_token_env": "MULTICHAT_NATIVE_TOKEN"
   },
   "outbound": {
     "enabled": false,
     "kick_token_env": "MULTICHAT_KICK_CHAT_WRITE_TOKEN",
     "kick_broadcaster_user_id": 0
+  },
+  "obs": {
+    "enabled": false,
+    "token_env": "MULTICHAT_OBS_EVENT_TOKEN",
+    "start_collectors_on_stream": true,
+    "scan_all_configured": false,
+    "websocket_enabled": false,
+    "websocket_port": 4455,
+    "websocket_password_env": "MULTICHAT_OBS_WS_PASSWORD"
   }
 }
