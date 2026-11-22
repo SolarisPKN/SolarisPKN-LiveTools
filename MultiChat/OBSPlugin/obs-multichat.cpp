@@ -2,6 +2,7 @@
 // Zero embedded browsers. One hidden OBS GDI+ text renderer per visible MultiChat source.
 // Network access: GET 127.0.0.1:<port>/obs/messages?limit=N only.
 #include <obs-module.h>
+#include <windows.h>
 #include <winhttp.h>
 
 #include <algorithm>
@@ -71,7 +72,18 @@ std::string fetch(unsigned port, int limit)
                                                nullptr, WINHTTP_NO_REFERER,
                                                WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
         if (request) {
-            if (WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+            // Separate read-only OBS token; never stored in scene settings or logged.
+            wchar_t secret[256] = {};
+            const DWORD size = GetEnvironmentVariableW(L"MULTICHAT_OBS_TOKEN", secret, 256);
+            std::wstring authHeader;
+            if (size >= 32 && size < 256) {
+                const std::wstring token(secret, size);
+                if (token.find_first_of(L"\r\n") == std::wstring::npos)
+                    authHeader = L"Authorization: Bearer " + token + L"\r\n";
+            }
+            if (WinHttpSendRequest(request,
+                                   authHeader.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : authHeader.c_str(),
+                                   authHeader.empty() ? 0 : static_cast<DWORD>(-1),
                                    WINHTTP_NO_REQUEST_DATA, 0, 0, 0) &&
                 WinHttpReceiveResponse(request, nullptr)) {
                 DWORD status = 0;

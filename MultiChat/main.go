@@ -16,7 +16,45 @@ func main() {
 	configPath := flag.String("config", "config.json", "configuration file path")
 	demo := flag.Bool("demo", false, "emit sample messages locally (no real platform connections)")
 	quiet := flag.Bool("quiet", false, "do not print incoming chat in terminal")
+	linkGoogle := flag.Bool("link-google", false, "authorize YouTube readonly in the browser and store Google OAuth protected for current Windows user")
+	unlinkGoogle := flag.Bool("unlink-google", false, "erase local saved Google OAuth credentials (does not revoke Google account permissions)")
+	linkTwitch := flag.Bool("link-twitch", false, "authorize Twitch chat:read via the Twitch device code flow")
+	unlinkTwitch := flag.Bool("unlink-twitch", false, "erase locally saved Twitch OAuth credentials")
 	flag.Parse()
+	if *linkTwitch {
+		if err := runTwitchLink(context.Background()); err != nil {
+			log.Fatalf("Twitch link failed: %v", err)
+		}
+		return
+	}
+	if *unlinkTwitch {
+		path, err := twitchCredentialsPath()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			log.Fatal(err)
+		}
+		log.Println("Twitch OAuth credentials erased locally. Revoke the app in Twitch if desired.")
+		return
+	}
+	if *linkGoogle {
+		if err := runGoogleLink(context.Background()); err != nil {
+			log.Fatalf("Google link failed: %v", err)
+		}
+		return
+	}
+	if *unlinkGoogle {
+		path, err := savedGooglePath()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			log.Fatal(err)
+		}
+		log.Println("Local Google OAuth credentials removed; you can revoke permissions in your Google Account separately.")
+		return
+	}
 	cfg, err := readConfig(*configPath)
 	if err != nil {
 		log.Fatalf("config: %v", err)
@@ -39,23 +77,25 @@ func main() {
 			}
 		}()
 	}
-	if cfg.Twitch.Enabled {
-		go twitchLoop(ctx, cfg.Twitch, h, log.Printf)
-	}
-	if cfg.YouTube.Enabled {
-		go youtubeLoop(ctx, cfg.YouTube, h, log.Printf)
-	}
-	if cfg.TikTok.Enabled {
-		go tiktokLoop(ctx, cfg.TikTok, h, log.Printf)
-	}
-	if cfg.Kick.Enabled {
-		go kickLoop(ctx, cfg.Kick, h, log.Printf)
-	}
-	if cfg.Facebook.Enabled {
-		go facebookLoop(ctx, cfg.Facebook, h, log.Printf)
-	}
-	if cfg.Rumble.Enabled {
-		go rumbleLoop(ctx, cfg.Rumble, h, log.Printf)
+	if !*demo {
+		if cfg.Twitch.Enabled {
+			go twitchLoop(ctx, cfg.Twitch, h, log.Printf)
+		}
+		if cfg.YouTube.Enabled {
+			go youtubeLoop(ctx, cfg.YouTube, h, log.Printf)
+		}
+		if cfg.TikTok.Enabled {
+			go tiktokLoop(ctx, cfg.TikTok, h, log.Printf)
+		}
+		if cfg.Kick.Enabled {
+			go kickLoop(ctx, cfg.Kick, h, log.Printf)
+		}
+		if cfg.Facebook.Enabled {
+			go facebookLoop(ctx, cfg.Facebook, h, log.Printf)
+		}
+		if cfg.Rumble.Enabled {
+			go rumbleLoop(ctx, cfg.Rumble, h, log.Printf)
+		}
 	}
 	if *demo {
 		go func() {

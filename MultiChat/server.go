@@ -27,6 +27,19 @@ func newHandler(h *Hub, c Config) http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "history_count": len(h.snapshot()), "configured": map[string]bool{"twitch": c.Twitch.Enabled, "youtube": c.YouTube.Enabled, "tiktok": c.TikTok.Enabled, "kick": c.Kick.Enabled, "facebook": c.Facebook.Enabled, "rumble": c.Rumble.Enabled, "ingest": c.Ingest.Enabled}})
 	})
+	mux.HandleFunc("GET /auth/providers", func(w http.ResponseWriter, r *http.Request) {
+		// Report configuration and locally saved credentials, NOT remote login or LIVE status.
+		_, googleErr := loadGoogleCredentials()
+		_, twitchErr := loadTwitchCredentials()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"youtube":  map[string]any{"enabled": c.YouTube.Enabled, "oauth_saved": googleErr == nil, "method": "google_oauth_or_api_key"},
+			"twitch":   map[string]any{"enabled": c.Twitch.Enabled, "oauth_saved": twitchErr == nil, "method": "twitch_device_oauth_or_irc_token"},
+			"facebook": map[string]any{"enabled": c.Facebook.Enabled, "page_token_provided": c.Facebook.AccessTokenEnv != "" && os.Getenv(c.Facebook.AccessTokenEnv) != "", "method": "meta_page_access_token"},
+			"kick":     map[string]any{"enabled": c.Kick.Enabled, "method": "public_chat_guest"},
+			"tiktok":   map[string]any{"enabled": c.TikTok.Enabled, "method": "public_webcast"},
+		})
+	})
 	mux.HandleFunc("GET /obs/messages", func(w http.ResponseWriter, r *http.Request) {
 		// Bounded snapshot for the native OBS GDI+ plugin; no embedded browser.
 		n := 8
@@ -114,6 +127,7 @@ func newHandler(h *Hub, c Config) http.Handler {
 		h.publish(m)
 		w.WriteHeader(202)
 	})
+	protected := newPanelAuth(c.PanelAuth).middleware(mux)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		host, _, err := net.SplitHostPort(r.Host)
 		if err != nil {
@@ -125,6 +139,6 @@ func newHandler(h *Hub, c Config) http.Handler {
 		}
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
-		mux.ServeHTTP(w, r)
+		protected.ServeHTTP(w, r)
 	})
 }

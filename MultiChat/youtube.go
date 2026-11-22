@@ -67,7 +67,7 @@ func youtubeLoop(ctx context.Context, c YouTubeConfig, h *Hub, logf func(string,
 	var pageToken string
 	chatID := c.LiveChatID
 	oauthToken := os.Getenv(c.OAuthTokenEnv)
-	autoMode := c.LiveChatID == "" && c.VideoID == "" && oauthToken != ""
+	autoMode := c.LiveChatID == "" && c.VideoID == "" && (oauthToken != "" || c.UseSavedAuth)
 	var lastAutoLookup time.Time
 	windowStart := time.Now()
 	spent := 0
@@ -76,6 +76,15 @@ func youtubeLoop(ctx context.Context, c YouTubeConfig, h *Hub, logf func(string,
 	for ctx.Err() == nil {
 		if !sleepContext(ctx, wait) {
 			return
+		}
+		if c.UseSavedAuth {
+			fresh, err := currentGoogleToken(ctx)
+			if err != nil {
+				logf("[youtube] saved Google authorization unavailable; use -link-google or refresh access")
+				wait = time.Minute
+				continue
+			}
+			oauthToken = fresh
 		}
 		if autoMode && (lastAutoLookup.IsZero() || time.Since(lastAutoLookup) >= time.Minute) {
 			lastAutoLookup = time.Now()

@@ -9,21 +9,23 @@ import (
 )
 
 type Config struct {
-	Listen       string         `json:"listen"`
-	HistoryLimit int            `json:"history_limit"`
-	Twitch       TwitchConfig   `json:"twitch"`
-	YouTube      YouTubeConfig  `json:"youtube"`
-	TikTok       TikTokConfig   `json:"tiktok"`
-	Kick         KickConfig     `json:"kick"`
-	Facebook     FacebookConfig `json:"facebook"`
-	Rumble       RumbleConfig   `json:"rumble"`
-	Ingest       IngestConfig   `json:"ingest"`
+	PanelAuth    PanelAuthConfig `json:"panel_auth"`
+	Listen       string          `json:"listen"`
+	HistoryLimit int             `json:"history_limit"`
+	Twitch       TwitchConfig    `json:"twitch"`
+	YouTube      YouTubeConfig   `json:"youtube"`
+	TikTok       TikTokConfig    `json:"tiktok"`
+	Kick         KickConfig      `json:"kick"`
+	Facebook     FacebookConfig  `json:"facebook"`
+	Rumble       RumbleConfig    `json:"rumble"`
+	Ingest       IngestConfig    `json:"ingest"`
 }
 type TwitchConfig struct {
-	Enabled  bool   `json:"enabled"`
-	Channel  string `json:"channel"`
-	Nick     string `json:"nick"`
-	TokenEnv string `json:"token_env"`
+	Enabled      bool   `json:"enabled"`
+	Channel      string `json:"channel"`
+	Nick         string `json:"nick"`
+	TokenEnv     string `json:"token_env"`
+	UseSavedAuth bool   `json:"use_saved_twitch_auth"`
 }
 type YouTubeConfig struct {
 	Enabled         bool   `json:"enabled"`
@@ -31,6 +33,7 @@ type YouTubeConfig struct {
 	VideoID         string `json:"video_id"`
 	APIKeyEnv       string `json:"api_key_env"`
 	OAuthTokenEnv   string `json:"oauth_token_env"`
+	UseSavedAuth    bool   `json:"use_saved_google_auth"`
 	PollSeconds     int    `json:"poll_seconds"`
 	DailyQuotaUnits int    `json:"daily_quota_units"`
 }
@@ -59,6 +62,11 @@ type IngestConfig struct {
 	Enabled  bool   `json:"enabled"`
 	TokenEnv string `json:"token_env"`
 }
+type PanelAuthConfig struct {
+	Enabled     bool   `json:"enabled"`
+	TokenEnv    string `json:"token_env"`
+	OBSTokenEnv string `json:"obs_token_env"`
+}
 
 func readConfig(path string) (Config, error) {
 	var c Config
@@ -81,12 +89,26 @@ func readConfig(path string) (Config, error) {
 	if c.HistoryLimit > 1000 {
 		c.HistoryLimit = 1000
 	}
-	if c.Twitch.Enabled && (c.Twitch.Channel == "" || c.Twitch.Nick == "" || c.Twitch.TokenEnv == "" || os.Getenv(c.Twitch.TokenEnv) == "") {
-		return c, errors.New("twitch: channel, nick and token environment required")
+	if c.PanelAuth.Enabled {
+		if c.PanelAuth.TokenEnv == "" || len(os.Getenv(c.PanelAuth.TokenEnv)) < 32 {
+			return c, errors.New("panel_auth: token_env must contain a secret of at least 32 characters")
+		}
+		if c.PanelAuth.OBSTokenEnv != "" {
+			obsKey := os.Getenv(c.PanelAuth.OBSTokenEnv)
+			if len(obsKey) < 32 || obsKey == os.Getenv(c.PanelAuth.TokenEnv) {
+				return c, errors.New("panel_auth: obs_token_env must be at least 32 characters and different from the panel token")
+			}
+		}
+	}
+	if c.Twitch.Enabled && c.Twitch.Channel == "" {
+		return c, errors.New("twitch: channel required")
+	}
+	if c.Twitch.Enabled && !c.Twitch.UseSavedAuth && (c.Twitch.Nick == "" || c.Twitch.TokenEnv == "" || os.Getenv(c.Twitch.TokenEnv) == "") {
+		return c, errors.New("twitch: nick and token environment required unless using saved Twitch OAuth")
 	}
 	if c.YouTube.Enabled {
 		hasYouTubeAPIKey := c.YouTube.APIKeyEnv != "" && os.Getenv(c.YouTube.APIKeyEnv) != ""
-		hasYouTubeOAuth := c.YouTube.OAuthTokenEnv != "" && os.Getenv(c.YouTube.OAuthTokenEnv) != ""
+		hasYouTubeOAuth := c.YouTube.UseSavedAuth || (c.YouTube.OAuthTokenEnv != "" && os.Getenv(c.YouTube.OAuthTokenEnv) != "")
 		if !hasYouTubeAPIKey && !hasYouTubeOAuth {
 			return c, errors.New("youtube: API key or OAuth token environment required")
 		}

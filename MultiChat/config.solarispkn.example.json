@@ -4,11 +4,12 @@
   "youtube": {
     "enabled": false,
     "live_chat_id": "",
-    "video_id": "hgszxU2CTEs",
+    "video_id": "",
     "oauth_token_env": "MULTICHAT_YOUTUBE_OAUTH_TOKEN",
     "api_key_env": "MULTICHAT_YOUTUBE_API_KEY",
     "poll_seconds": 20,
-    "daily_quota_units": 6000
+    "daily_quota_units": 6000,
+    "use_saved_google_auth": true
   },
   "tiktok": {
     "enabled": false,
@@ -18,7 +19,8 @@
     "enabled": false,
     "channel": "solarispkn",
     "nick": "solarispkn",
-    "token_env": "MULTICHAT_TWITCH_TOKEN"
+    "token_env": "MULTICHAT_TWITCH_TOKEN",
+    "use_saved_twitch_auth": true
   },
   "kick": {
     "enabled": false,
@@ -40,5 +42,10 @@
   "ingest": {
     "enabled": false,
     "token_env": "MULTICHAT_INGEST_TOKEN"
+  },
+  "panel_auth": {
+    "enabled": true,
+    "token_env": "MULTICHAT_PANEL_TOKEN",
+    "obs_token_env": "MULTICHAT_OBS_TOKEN"
   }
 }

@@ -60,6 +60,16 @@ $env:MULTICHAT_TWITCH_TOKEN = 'oauth:...'
 $env:MULTICHAT_FACEBOOK_PAGE_TOKEN = '...'
 ```
 
+## Autenticación del visor y de las cuentas
+
+La configuración opcional `panel_auth.enabled` añade un login local (cookie de sesión HttpOnly, SameSite Strict, sin almacenar la clave en el repo) y un token separado para que OBS lea solamente `/obs/messages`. La muestra `config.solarispkn.example.json` activa el bloqueo de forma intencional: requiere configurar previamente dos variables de entorno con claves distintas, de al menos 32 caracteres.
+
+Con OAuth, **YouTube** dispone de `-link-google` (escritorio Google, PKCE, permiso `youtube.readonly`) y **Twitch** de `-link-twitch` (código de dispositivo, permiso `chat:read`). Ambos guardan el token cifrado para el usuario Windows con DPAPI y tienen renovación automática; jamás guardan contraseñas de las plataformas. En configuración podés habilitar `youtube.use_saved_google_auth` y `twitch.use_saved_twitch_auth` después de autorizar las cuentas. Para borrar los vínculos locales existen `-unlink-google` y `-unlink-twitch`.
+
+La autorización con Google y Twitch necesita registrar sus propias aplicaciones OAuth/Client ID y consentir expresamente desde el navegador; las rutas se verificaron con pruebas aisladas, **pero todavía no se probaron sobre cuentas reales**. Facebook sigue usando un token autorizado de Página; los chats públicos de Kick/TikTok no necesitan login actualmente.
+
+**Instrucciones completas, comandos para crear las claves y límites:** [Autenticación de MultiChat](docs/AUTH.es.md). La aplicación principal futura está descrita en [Plan SolarisPKN-LiveTools](docs/LIVETOOLS-APP-PLAN.es.md).
+
 ## API y OBS
 
 - `GET /health`: conectores habilitados, historial y salud básica (no confirma autenticación remota)
