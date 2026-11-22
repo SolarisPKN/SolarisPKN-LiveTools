@@ -1,15 +1,23 @@
-# Windows, OBS y resolución de problemas
+# MultiChat y OBS
 
-1. Desde `MultiChat`, copiá `config.example.json` a `config.json`. Sin credenciales podés usar `go run . -config config.json -demo`.
-2. Abrí `http://127.0.0.1:8765` en un navegador local para validar que la UI muestra mensajes.
-3. En OBS agregá **una Fuente de navegador**, con URL `http://127.0.0.1:8765/`, por ejemplo 380 × 700 píxeles.
-4. Esa fuente renderiza **un único chat para todas las plataformas**; no carga Twitch, Kick, YouTube, etc. La página de esta versión es oscura, todavía no transparente.
-5. Cerrá con Ctrl+C. Si querés minimizar salida por consola, ejecutá `MultiChat.exe -config config.json -quiet`.
+## Opción A: visor web local (ya incluido)
 
-## Problemas frecuentes
+1. Configurar `config.json` sin subir secretos a Git.
+2. Iniciar `MultiChat.exe -config config.json` (o `-demo` para simular).
+3. Agregar una **Fuente de navegador** en OBS con `http://127.0.0.1:8765/` (por ejemplo, 380x700).
+4. El visor es una única página local, no cinco navegadores de plataformas.
 
-- **No aparecen mensajes reales:** `-demo` solo produce ejemplos. Revisá credenciales, canal, liveChatId o API URL y `enabled:true`.
-- **No se abre la página:** verificá que el proceso siga ejecutándose y que el puerto 8765 no esté ocupado. Podés cambiar `listen` a otro puerto de loopback.
-- **YouTube deja de consultar:** revisar presupuesto, cuota externa y permisos del API.
-- **OBS usa CPU:** la Fuente de navegador renderiza la UI; para evaluar solo el recolector probá sin abrir el visor.
-- **Falta el EXE:** compilá con Go 1.22+ (`go build -o MultiChat.exe .`) o usá `iniciar-multichat.cmd` cuando Go esté instalado.
+## Opción B: plugin nativo GDI+ (fuente experimental)
+
+En la copia local existe `OBSPlugin/obs-multichat.cpp`, con `CMakeLists.txt`. Su diseño evita CEF en la fuente de chat: consulta `GET /obs/messages?limit=N` y pinta texto con GDI+.
+
+**Corregido en el servidor Go:** ahora existe `/obs/messages`, limitado a 1-16 entradas. El test `TestOBSMessagesRoute` comprueba el JSON. Falta compilar la DLL con el SDK/libobs compatible con OBS instalado y probar la carga y render real. No copiar ni inyectar módulos sin validación.
+
+## SceneSync para TikTok LIVE Studio
+
+Se clonó para **auditoría** el proyecto externo MIT https://github.com/dannguyen9x/tiktok-live-studio-mcp bajo
+`D:\SolarisPKN-IA\Proyectos-Locales\TikTok-LIVE-Studio-MCP-Research`.
+
+El programa externo permite detectar escenas y cambiarlas mediante el canal local Socket.IO de Stream Deck. `npm run test:ci` pasó con 12 tests; el smoke MCP real informa `STUDIO_NOT_RUNNING` mientras LIVE Studio esté cerrado. Eso no demuestra control de escenas en la PC todavía.
+
+Futuro enlace: OBS WebSocket evento `CurrentProgramSceneChanged` -> mapeo de nombres -> `studio_switch_scene`, con confirmación posterior y sin arrancar/detener emisiones automáticamente.

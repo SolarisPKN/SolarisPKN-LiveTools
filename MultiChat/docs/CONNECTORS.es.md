@@ -1,15 +1,32 @@
-# Estado de las plataformas
+# MultiChat: estado de conectores (21/11/2026)
 
-**Implementado en el MVP (sin validación con cuentas reales):** Twitch IRC/TLS, YouTube Live `liveChatMessages.list`, Rumble Live Stream API. Entrada local de adaptadores disponible mediante Bearer `/api/ingest` (no equivale a un conector completo).
+**Prioridad acordada:** YouTube > TikTok > Twitch > Kick > Facebook.
 
-**Pendiente de desarrollar:** Kick (webhooks oficiales y verificación de firma), TikTok LIVE (alternativas no oficiales sujetas a cambios y condiciones), CHZZK/Naver (Socket.IO y autorización), Bilibili (API de Live), FC2 Live (comentarios), Vaughn Live (WebSocket/IRC según acceso), SOOP (API/SDK), Nimo TV, Steam Broadcast, Dailymotion, Naver TV clásico, Facebook Live e Instagram Live. Nonolive se posterga hasta confirmar que el servicio siga operativo.
+| Plataforma | Implementación | Verificado | Pendiente |
+|---|---|---|---|
+| YouTube | `liveChatMessages.list` con opción de descubrir `liveChatId` desde `videos.list` usando `video_id` | Compilación y pruebas unitarias | API key y directo real; evaluar `streamList` para mejorar latencia/cuota |
+| TikTok | Cliente Go público Webcast, sin login; dependencia `github.com/PirateTok/live-go` (0BSD) | Parser y build local | Evento real, resistencia a cambios de TikTok |
+| Twitch | IRC SSL/TLS con OAuth, PING/PONG, tags y reconexión | Parser y build local | Cuenta y directo real |
+| Kick | Cliente Centrifugo por WebSocket, con JWT de invitado y búsqueda de chatroom | Parser y build local | Negociación guest y mensajes reales, posible bloqueo por CDN |
+| Facebook | Meta Graph API para comentarios de video LIVE de Página | Parser y build local | Token de Página con permisos, chat real y cuota |
+| Rumble | API Live Stream privada | Código y tests base existentes | Cuenta y directo real |
+| Adaptadores | Ingesta Bearer loopback | Test local | Puentes adicionales |
 
-## Reglas para cada conector
+## Fuentes técnicas
 
-1. Usar transportes oficiales HTTPS, WebSocket, IRC o SSE antes que una instancia de navegador.
-2. Respetar intervalos, cuotas y `Retry-After`, con reconexión progresiva.
-3. No registrar ni subir tokens, cookies o endpoints privados.
-4. Validar eventos de origen antes de inyectarlos al hub; los webhooks de Kick requieren verificación de firma HTTPS pública en un puente separado.
-5. Probar primero payloads sintéticos y después un live real autorizado. Documentar límites y consumo.
+- YouTube: https://developers.google.com/youtube/data/live/reference/rest/v3/liveChatMessages/list
+- Video ID a chat ID: https://developers.google.com/youtube/data/reference/rest/v3/videos
+- Twitch IRC: https://dev.twitch.tv/docs/chat/irc/
+- TikTok Go público no oficial: https://github.com/PirateTok/live-go
+- Kick migración Pusher->Centrifugo desde octubre de 2026: https://github.com/AnisAbdellatif/kicksdk/blob/main/docs/KICK.md
+- Kick webhook **oficial** `chat.message.sent` si se diseña un relay público HTTPS con firma: https://github.com/KickEngineering/KickDevDocs/blob/main/events/webhook-security.md
+- Meta Graph LIVE comments: https://developers.facebook.com/docs/graph-api/reference/live-video/comments/
 
-Documentación de implementaciones actuales: [Twitch IRC](https://dev.twitch.tv/docs/chat/irc/), [YouTube](https://developers.google.com/youtube/v3/live/docs/liveChatMessages/list), [Rumble](https://rumble.support/help/how-to-use-rumble-s-live-stream-api).
+## Seguridad y políticas
+
+1. Todo está desactivado salvo habilitación explícita en configuración.
+2. El servidor local solo escucha en loopback.
+3. YouTube, Facebook y Twitch requieren credenciales proporcionadas por el usuario mediante variables de entorno; nunca incluirlas en Git.
+4. TikTok y Kick son **no oficiales**: no simulan una garantía de compatibilidad ni usan cookies de sesión guardadas.
+5. No hay automatización de publicación ni acciones de moderación en estos conectores.
+6. Tests de parsers, deduplicación, HTTP y compilación **no equivalen** a un directo real validado.
