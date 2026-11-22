@@ -70,6 +70,16 @@ La autorización con Google y Twitch necesita registrar sus propias aplicaciones
 
 **Instrucciones completas, comandos para crear las claves y límites:** [Autenticación de MultiChat](docs/AUTH.es.md). La aplicación principal futura está descrita en [Plan SolarisPKN-LiveTools](docs/LIVETOOLS-APP-PLAN.es.md).
 
+## Consola de envío de mensajes y comandos
+
+Desde el chat podés abrir la ventana **Enviar / Comandos** (o directamente `/compose`). Incluye cinco destinos —YouTube, TikTok, Twitch, Kick y Facebook— con checkboxes, **Seleccionar todas**, **Deseleccionar todas** y **Solo** para dirigir un mensaje a una plataforma. El resultado de cada destino aparece por separado.
+
+El modo `-demo` simula todos los envíos sin publicar nada, y muestra el resultado de prueba en el historial. El envío real está **desactivado por defecto** y exige `outbound.enabled=true`, autenticación del panel y los permisos de escritura de cada red. YouTube, Twitch, Facebook y Kick tienen adaptadores HTTP oficiales para publicar mensajes; TikTok aún se mantiene solo en lectura. Los comandos enviados como texto (por ejemplo `!redes`) **no son acciones administrativas garantizadas**.
+
+Google ahora solicita expresamente el alcance `youtube.force-ssl` para publicar junto con el de lectura; Twitch requiere `user:write:chat` además de `chat:read`. Si tenés un OAuth de solo lectura, debe autorizarse nuevamente. No se creó ninguna autorización de cuenta real durante el desarrollo.
+
+Detalles completos: [Consola de envío](docs/OUTBOUND.es.md).
+
 ## API y OBS
 
 - `GET /health`: conectores habilitados, historial y salud básica (no confirma autenticación remota)

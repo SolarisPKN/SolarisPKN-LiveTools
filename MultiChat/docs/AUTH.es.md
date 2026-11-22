@@ -38,7 +38,7 @@ Un proceso local con el mismo usuario y suficiente privilegio puede acceder a la
 
 ## B. Google / YouTube — OAuth de solo lectura
 
-Crear credenciales de tipo **Desktop app** en Google Cloud y habilitar YouTube Data API v3. Se usa el scope mínimo `https://www.googleapis.com/auth/youtube.readonly`, `state` aleatorio y PKCE `S256`, con un callback local temporal.
+Crear credenciales de tipo **Desktop app** en Google Cloud y habilitar YouTube Data API v3. Se usa el scopes de lectura `https://www.googleapis.com/auth/youtube.readonly` y envío de chat `https://www.googleapis.com/auth/youtube.force-ssl`, `state` aleatorio y PKCE `S256`, con un callback local temporal.
 
 ```powershell
 $env:MULTICHAT_GOOGLE_CLIENT_ID = "ID.apps.googleusercontent.com"
@@ -73,7 +73,7 @@ Fuentes oficiales:
 
 ## C. Twitch — Device Authorization
 
-Twitch permite una aplicación OAuth pública por **Device Code Grant**, sin copiar contraseñas ni usar un secreto de cliente para ese flujo. Registrar una aplicación de Twitch y obtener su Client ID; pedir solamente `chat:read`.
+Twitch permite una aplicación OAuth pública por **Device Code Grant**, sin copiar contraseñas ni usar un secreto de cliente para ese flujo. Registrar una aplicación de Twitch y obtener su Client ID; pedir `chat:read` para recibir mensajes y `user:write:chat` para enviar mensajes explícitos.
 
 ```powershell
 $env:MULTICHAT_TWITCH_CLIENT_ID = "CLIENT_ID_DE_TWITCH"

@@ -47,5 +47,10 @@
     "enabled": true,
     "token_env": "MULTICHAT_PANEL_TOKEN",
     "obs_token_env": "MULTICHAT_OBS_TOKEN"
+  },
+  "outbound": {
+    "enabled": false,
+    "kick_token_env": "MULTICHAT_KICK_CHAT_WRITE_TOKEN",
+    "kick_broadcaster_user_id": 0
   }
 }

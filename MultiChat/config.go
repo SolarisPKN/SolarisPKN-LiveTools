@@ -10,6 +10,8 @@ import (
 
 type Config struct {
 	PanelAuth    PanelAuthConfig `json:"panel_auth"`
+	Outbound     OutboundConfig  `json:"outbound"`
+	Demo         bool            `json:"-"`
 	Listen       string          `json:"listen"`
 	HistoryLimit int             `json:"history_limit"`
 	Twitch       TwitchConfig    `json:"twitch"`
@@ -99,6 +101,12 @@ func readConfig(path string) (Config, error) {
 				return c, errors.New("panel_auth: obs_token_env must be at least 32 characters and different from the panel token")
 			}
 		}
+	}
+	if c.Outbound.Enabled && !c.PanelAuth.Enabled {
+		return c, errors.New("outbound: panel_auth must be enabled before real chat sending")
+	}
+	if c.Outbound.KickBroadcasterUserID < 0 {
+		return c, errors.New("outbound: invalid Kick broadcaster_user_id")
 	}
 	if c.Twitch.Enabled && c.Twitch.Channel == "" {
 		return c, errors.New("twitch: channel required")

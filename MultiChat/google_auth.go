@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-const googleScope = "https://www.googleapis.com/auth/youtube.readonly"
+const googleScope = "https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.force-ssl"
 const googleAuthorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth"
 const googleTokenEndpoint = "https://oauth2.googleapis.com/token"
 

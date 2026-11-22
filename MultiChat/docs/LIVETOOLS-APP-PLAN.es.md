@@ -31,7 +31,7 @@ SolarisPKN-LiveTools (aplicación principal futura)
 
 ## Progresión
 
-- **Ahora**: login de MultiChat, protección de historial/SSE/OBS, autorización explícita Google OAuth y Twitch Device Code, Meta Page Token manual y lectura pública Kick/TikTok.
+- **Ahora**: login de MultiChat, protección de historial/SSE/OBS, autorización explícita Google OAuth y Twitch Device Code, Meta Page Token manual, lectura pública Kick/TikTok y **consola de envío multiplataforma** con checkboxes, modo demo y respuestas individuales. El envío real por API exige permisos de escritura y está apagado por defecto.
 - **Próxima etapa**: panel de estado de conexiones, OAuth de Meta con permisos aprobados, autoarranque de módulos, y pruebas de LIVE real por plataforma.
 - **App principal**: interfaz unificada con pestañas, centralización de credenciales, orquestación del ciclo de vida de procesos y observabilidad.
 - **Después**: instalador único, extensiones, actualizador con rollback y distribución en Windows/Linux según la capacidad real de cada módulo (audio drivers Windows pueden requerir componentes propios).

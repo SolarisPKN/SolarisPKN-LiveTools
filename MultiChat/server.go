@@ -23,6 +23,12 @@ func newHandler(h *Hub, c Config) http.Handler {
 		w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'")
 		_, _ = io.WriteString(w, webPage)
 	})
+	mux.HandleFunc("GET /compose", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'")
+		_, _ = io.WriteString(w, composerPage)
+	})
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "history_count": len(h.snapshot()), "configured": map[string]bool{"twitch": c.Twitch.Enabled, "youtube": c.YouTube.Enabled, "tiktok": c.TikTok.Enabled, "kick": c.Kick.Enabled, "facebook": c.Facebook.Enabled, "rumble": c.Rumble.Enabled, "ingest": c.Ingest.Enabled}})
@@ -103,6 +109,9 @@ func newHandler(h *Hub, c Config) http.Handler {
 			}
 		}
 	})
+	outbox := newOutboundService(c, h)
+	mux.HandleFunc("GET /api/outbound/status", outbox.serveStatus)
+	mux.HandleFunc("POST /api/outbound/send", outbox.serveSend)
 	mux.HandleFunc("POST /api/ingest", func(w http.ResponseWriter, r *http.Request) {
 		if !c.Ingest.Enabled {
 			http.NotFound(w, r)

@@ -198,7 +198,7 @@ func runTwitchLink(ctx context.Context) error {
 	if clientID == "" {
 		return errors.New("set MULTICHAT_TWITCH_CLIENT_ID to your public Twitch app client ID")
 	}
-	params := url.Values{"client_id": {clientID}, "scopes": {"chat:read"}}
+	params := url.Values{"client_id": {clientID}, "scopes": {"chat:read user:write:chat"}}
 	status, data, err := twitchForm(ctx, twitchDeviceEndpoint, params)
 	if err != nil {
 		return err
@@ -243,7 +243,7 @@ func runTwitchLink(ctx context.Context) error {
 		if !sleepContext(ctx, time.Duration(device.Interval)*time.Second) {
 			return ctx.Err()
 		}
-		values := url.Values{"client_id": {clientID}, "scopes": {"chat:read"}, "device_code": {device.DeviceCode}, "grant_type": {"urn:ietf:params:oauth:grant-type:device_code"}}
+		values := url.Values{"client_id": {clientID}, "scopes": {"chat:read user:write:chat"}, "device_code": {device.DeviceCode}, "grant_type": {"urn:ietf:params:oauth:grant-type:device_code"}}
 		status, raw, err := twitchForm(ctx, twitchTokenEndpoint, values)
 		if err != nil {
 			return err
