@@ -27,11 +27,17 @@ type youtubeResponse struct {
 	} `json:"items"`
 }
 
-func youtubeLookupLiveChatID(ctx context.Context, client *http.Client, videoID, apiKey string) (string, error) {
-	q := url.Values{"part": {"liveStreamingDetails"}, "id": {videoID}, "key": {apiKey}}
+func youtubeLookupLiveChatID(ctx context.Context, client *http.Client, videoID, apiKey, oauthToken string) (string, error) {
+	q := url.Values{"part": {"liveStreamingDetails"}, "id": {videoID}}
+	if apiKey != "" {
+		q.Set("key", apiKey)
+	}
 	req, err := http.NewRequestWithContext(ctx, "GET", "https://www.googleapis.com/youtube/v3/videos?"+q.Encode(), nil)
 	if err != nil {
 		return "", err
+	}
+	if oauthToken != "" {
+		req.Header.Set("Authorization", "Bearer "+oauthToken)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -60,6 +66,9 @@ func youtubeLoop(ctx context.Context, c YouTubeConfig, h *Hub, logf func(string,
 	client := &http.Client{Timeout: 12 * time.Second}
 	var pageToken string
 	chatID := c.LiveChatID
+	oauthToken := os.Getenv(c.OAuthTokenEnv)
+	autoMode := c.LiveChatID == "" && c.VideoID == "" && oauthToken != ""
+	var lastAutoLookup time.Time
 	windowStart := time.Now()
 	spent := 0
 	base := time.Duration(c.PollSeconds) * time.Second
@@ -68,17 +77,37 @@ func youtubeLoop(ctx context.Context, c YouTubeConfig, h *Hub, logf func(string,
 		if !sleepContext(ctx, wait) {
 			return
 		}
-		if chatID == "" {
-			resolved, lookupErr := youtubeLookupLiveChatID(ctx, client, c.VideoID, os.Getenv(c.APIKeyEnv))
+		if autoMode && (lastAutoLookup.IsZero() || time.Since(lastAutoLookup) >= time.Minute) {
+			lastAutoLookup = time.Now()
+			resolved, lookupErr := youtubeActiveChatID(ctx, client, oauthToken)
 			if lookupErr != nil {
-				logf("[youtube] video lookup failed; will retry")
+				logf("[youtube] live discovery unavailable; retrying")
+				wait = time.Minute
+				continue
+			}
+			if resolved != chatID {
+				chatID = resolved
+				pageToken = ""
+				if resolved != "" {
+					logf("[youtube] switched to current broadcast")
+				}
+			}
+		}
+		if chatID == "" {
+			if autoMode {
+				wait = time.Minute
+				continue
+			}
+			resolved, lookupErr := youtubeLookupLiveChatID(ctx, client, c.VideoID, os.Getenv(c.APIKeyEnv), oauthToken)
+			if lookupErr != nil {
+				logf("[youtube] video lookup failed; retrying")
 				wait = time.Minute
 				continue
 			}
 			if resolved == "" {
 				wait = time.Minute
 				continue
-			} // live not active yet
+			}
 			chatID = resolved
 			logf("[youtube] active chat identified from video ID")
 		}
@@ -91,13 +120,19 @@ func youtubeLoop(ctx context.Context, c YouTubeConfig, h *Hub, logf func(string,
 			return
 		}
 		spent += 5
-		q := url.Values{"part": {"snippet,authorDetails"}, "liveChatId": {chatID}, "maxResults": {"200"}, "key": {os.Getenv(c.APIKeyEnv)}}
+		q := url.Values{"part": {"snippet,authorDetails"}, "liveChatId": {chatID}, "maxResults": {"200"}}
+		if apiKey := os.Getenv(c.APIKeyEnv); apiKey != "" {
+			q.Set("key", apiKey)
+		}
 		if pageToken != "" {
 			q.Set("pageToken", pageToken)
 		}
 		req, err := http.NewRequestWithContext(ctx, "GET", "https://www.googleapis.com/youtube/v3/liveChat/messages?"+q.Encode(), nil)
 		if err != nil {
 			return
+		}
+		if oauthToken != "" {
+			req.Header.Set("Authorization", "Bearer "+oauthToken)
 		}
 		resp, err := client.Do(req)
 		if err != nil {
@@ -115,6 +150,13 @@ func youtubeLoop(ctx context.Context, c YouTubeConfig, h *Hub, logf func(string,
 		if resp.StatusCode != 200 {
 			logf("[youtube] HTTP %d (quota, permissions or stream state); retry delayed", resp.StatusCode)
 			wait = 2 * time.Minute
+			if autoMode && (resp.StatusCode == 403 || resp.StatusCode == 404) {
+				chatID = ""
+				pageToken = ""
+				lastAutoLookup = time.Time{}
+				wait = time.Minute
+				continue
+			}
 			if resp.StatusCode == 404 && c.VideoID != "" {
 				chatID = ""
 				pageToken = ""

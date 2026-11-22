@@ -52,9 +52,35 @@ func parseFacebookMessages(raw []byte) ([]Message, error) {
 func facebookLoop(ctx context.Context, c FacebookConfig, h *Hub, logf func(string, ...any)) {
 	client := &http.Client{Timeout: 12 * time.Second}
 	delay := time.Duration(c.PollSeconds) * time.Second
+	currentVideoID := c.LiveVideoID
+	autoMode := c.PageID != ""
+	var lastAutoLookup time.Time
 	for ctx.Err() == nil {
+		if autoMode && (lastAutoLookup.IsZero() || time.Since(lastAutoLookup) >= time.Minute) {
+			lastAutoLookup = time.Now()
+			resolved, err := facebookActiveLiveVideoID(ctx, client, c.PageID, os.Getenv(c.AccessTokenEnv))
+			if err != nil {
+				logf("[facebook] Page live discovery unavailable; retrying")
+				if !sleepContext(ctx, time.Minute) {
+					return
+				}
+				continue
+			}
+			if currentVideoID != resolved {
+				currentVideoID = resolved
+				if resolved != "" {
+					logf("[facebook] switched to active Page LIVE video")
+				}
+			}
+		}
+		if currentVideoID == "" {
+			if !sleepContext(ctx, 30*time.Second) {
+				return
+			}
+			continue
+		}
 		q := url.Values{"fields": {"id,message,from{name},created_time"}, "limit": {"100"}, "order": {"reverse_chronological"}, "filter": {"stream"}}
-		endpoint := "https://graph.facebook.com/v27.0/" + url.PathEscape(c.LiveVideoID) + "/comments?" + q.Encode()
+		endpoint := "https://graph.facebook.com/v27.0/" + url.PathEscape(currentVideoID) + "/comments?" + q.Encode()
 		req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
 		if err != nil {
 			return

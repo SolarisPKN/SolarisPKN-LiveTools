@@ -30,6 +30,7 @@ type YouTubeConfig struct {
 	LiveChatID      string `json:"live_chat_id"`
 	VideoID         string `json:"video_id"`
 	APIKeyEnv       string `json:"api_key_env"`
+	OAuthTokenEnv   string `json:"oauth_token_env"`
 	PollSeconds     int    `json:"poll_seconds"`
 	DailyQuotaUnits int    `json:"daily_quota_units"`
 }
@@ -45,6 +46,7 @@ type KickConfig struct {
 type FacebookConfig struct {
 	Enabled        bool   `json:"enabled"`
 	LiveVideoID    string `json:"live_video_id"`
+	PageID         string `json:"page_id"`
 	AccessTokenEnv string `json:"access_token_env"`
 	PollSeconds    int    `json:"poll_seconds"`
 }
@@ -83,8 +85,13 @@ func readConfig(path string) (Config, error) {
 		return c, errors.New("twitch: channel, nick and token environment required")
 	}
 	if c.YouTube.Enabled {
-		if (c.YouTube.LiveChatID == "" && c.YouTube.VideoID == "") || c.YouTube.APIKeyEnv == "" || os.Getenv(c.YouTube.APIKeyEnv) == "" {
-			return c, errors.New("youtube: live_chat_id and API key environment required")
+		hasYouTubeAPIKey := c.YouTube.APIKeyEnv != "" && os.Getenv(c.YouTube.APIKeyEnv) != ""
+		hasYouTubeOAuth := c.YouTube.OAuthTokenEnv != "" && os.Getenv(c.YouTube.OAuthTokenEnv) != ""
+		if !hasYouTubeAPIKey && !hasYouTubeOAuth {
+			return c, errors.New("youtube: API key or OAuth token environment required")
+		}
+		if c.YouTube.LiveChatID == "" && c.YouTube.VideoID == "" && !hasYouTubeOAuth {
+			return c, errors.New("youtube: current stream autodiscovery requires OAuth token")
 		}
 		if c.YouTube.PollSeconds < 20 {
 			c.YouTube.PollSeconds = 20
@@ -120,8 +127,13 @@ func readConfig(path string) (Config, error) {
 		}
 	}
 	if c.Facebook.Enabled {
-		if c.Facebook.LiveVideoID == "" || c.Facebook.AccessTokenEnv == "" || os.Getenv(c.Facebook.AccessTokenEnv) == "" {
-			return c, errors.New("facebook: live_video_id and page access token environment required")
+		if (c.Facebook.LiveVideoID == "" && c.Facebook.PageID == "") || c.Facebook.AccessTokenEnv == "" || os.Getenv(c.Facebook.AccessTokenEnv) == "" {
+			return c, errors.New("facebook: live_video_id or page_id, and Page access token required")
+		}
+		for _, digit := range c.Facebook.PageID {
+			if digit < '0' || digit > '9' {
+				return c, errors.New("facebook: numeric page_id required")
+			}
 		}
 		for _, digit := range c.Facebook.LiveVideoID {
 			if digit < '0' || digit > '9' {

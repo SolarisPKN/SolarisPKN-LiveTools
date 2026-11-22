@@ -1,0 +1,44 @@
+{
+  "listen": "127.0.0.1:8765",
+  "history_limit": 250,
+  "youtube": {
+    "enabled": false,
+    "live_chat_id": "",
+    "video_id": "hgszxU2CTEs",
+    "oauth_token_env": "MULTICHAT_YOUTUBE_OAUTH_TOKEN",
+    "api_key_env": "MULTICHAT_YOUTUBE_API_KEY",
+    "poll_seconds": 20,
+    "daily_quota_units": 6000
+  },
+  "tiktok": {
+    "enabled": false,
+    "username": "REEMPLAZAR_POR_TU_USUARIO_DE_TIKTOK"
+  },
+  "twitch": {
+    "enabled": false,
+    "channel": "solarispkn",
+    "nick": "solarispkn",
+    "token_env": "MULTICHAT_TWITCH_TOKEN"
+  },
+  "kick": {
+    "enabled": false,
+    "channel": "solarispkn",
+    "chatroom_id": ""
+  },
+  "facebook": {
+    "enabled": false,
+    "live_video_id": "964285429841619",
+    "page_id": "",
+    "access_token_env": "MULTICHAT_FACEBOOK_PAGE_TOKEN",
+    "poll_seconds": 10
+  },
+  "rumble": {
+    "enabled": false,
+    "api_url_env": "MULTICHAT_RUMBLE_API_URL",
+    "poll_seconds": 15
+  },
+  "ingest": {
+    "enabled": false,
+    "token_env": "MULTICHAT_INGEST_TOKEN"
+  }
+}

@@ -16,6 +16,17 @@ Chat unificado local en Go, sin Electron ni un navegador por plataforma. Conecto
 
 Todos los conectores empiezan con `enabled: false`. **Compilar y superar los tests no equivale a tener cuentas conectadas.** No se instalaron tokens ni se iniciaron transmisiones.
 
+### Descubrimiento automático de directos
+
+- **YouTube:** si dejás `youtube.video_id` y `youtube.live_chat_id` vacíos y proporcionás `youtube.oauth_token_env`, MultiChat consulta la emisión activa de la cuenta y cambia de chat cuando cambiás de directo (aproximadamente cada minuto). Un token OAuth de propietario es indispensable; una API key sola no puede consultar emisiones privadas del dueño. **Renovación automática del token: pendiente.**
+- **Facebook:** si proporcionás `facebook.page_id` (el identificador de tu Página, no del directo) y dejás `facebook.live_video_id` vacío, MultiChat detecta el video con estado LIVE_NOW y utiliza sus comentarios. Exige un token de Página con permisos válidos.
+- **Twitch y Kick:** `solarispkn` es el canal estable; no se guardan UUID de panel ni URLs por directo.
+- **TikTok:** el usuario es estable, la sala LIVE cambia; el conector público intenta descubrirla sin pegar una URL nueva.
+
+`config.solarispkn.example.json` contiene los datos de tus URLs como ejemplo, **desactivado** y sin secretos. El ID de Facebook extraído del panel de Producer es un candidato no validado por Graph API.
+
+Más detalles: [Mapa de URLs e IDs](docs/CHAT-IDS-SOLARISPKN.es.md).
+
 ## Instalar/ejecutar (Windows)
 
 Requiere Go **1.23+** para compilar; el `.exe` ya compilado no requiere Go.

@@ -5,6 +5,7 @@
     "enabled": false,
     "live_chat_id": "",
     "video_id": "YOUR_LIVE_VIDEO_ID",
+    "oauth_token_env": "MULTICHAT_YOUTUBE_OAUTH_TOKEN",
     "api_key_env": "MULTICHAT_YOUTUBE_API_KEY",
     "poll_seconds": 20,
     "daily_quota_units": 6000
@@ -27,6 +28,7 @@
   "facebook": {
     "enabled": false,
     "live_video_id": "FACEBOOK_LIVE_VIDEO_NUMERIC_ID",
+    "page_id": "",
     "access_token_env": "MULTICHAT_FACEBOOK_PAGE_TOKEN",
     "poll_seconds": 10
   },
