@@ -285,7 +285,7 @@ bool alreadyRunning(){
 }
 void startBackend(){
  if(alreadyRunning())return;
- std::wstring exe=appDirectory+L"\\MultiChat-commands-preview.exe";
+ std::wstring exe=appDirectory+L"\\MultiChat-native-engine.exe";
  std::wstring cfg=appDirectory+L"\\NativeUI\\demo-config.json";
  if(GetFileAttributesW(exe.c_str())==INVALID_FILE_ATTRIBUTES){return;}
  std::wstring args=L"\""+exe+L"\" -config \""+cfg+L"\" -demo -quiet";

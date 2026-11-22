@@ -17,7 +17,7 @@ La interfaz es un ejecutable pequeño en C++, separado del motor Go existente. E
 
 El ejecutable `MultiChat-Native.exe` está al lado de los ejecutables del motor dentro de la carpeta `MultiChat`.
 
-Al iniciar en modo demo, conecta con `127.0.0.1:8766` y, si no hay un motor escuchando, lanza oculto `MultiChat-commands-preview.exe -config NativeUI\\demo-config.json -demo -quiet`. La demostración no autentica plataformas ni envía mensajes a Internet. No utiliza el anterior puerto 8765, para no modificar la sesión antigua del visor web.
+Al iniciar en modo demo, conecta con `127.0.0.1:8766` y, si no hay un motor escuchando, lanza oculto `MultiChat-native-engine.exe -config NativeUI\\demo-config.json -demo -quiet`. La demostración no autentica plataformas ni envía mensajes a Internet. No utiliza el anterior puerto 8765, para no modificar la sesión antigua del visor web.
 
 **No activar envíos reales mediante este archivo de demo.** Los botones se colorean en demo porque las simulaciones están habilitadas, pero no significan que exista autorización real en las cuentas. La API puede marcar no disponible un destino si faltan permisos.
 
@@ -30,12 +30,12 @@ cd D:\SolarisPKN-IA\Proyectos-Locales\SolarisPKN-LiveTools\MultiChat\NativeUI
 build-native.cmd
 ```
 
-El script compila `..\\MultiChat-Native.exe` usando exclusivamente Windows SDK, Win32, WinHTTP y GDI+. Requiere compilar el backend Go `MultiChat-commands-preview.exe` por separado:
+El script compila `..\\MultiChat-Native.exe` usando exclusivamente Windows SDK, Win32, WinHTTP y GDI+. Requiere compilar el backend Go `MultiChat-native-engine.exe` por separado:
 
 ```powershell
 cd D:\SolarisPKN-IA\Proyectos-Locales\SolarisPKN-LiveTools\MultiChat
 go test ./...
-go build -trimpath -ldflags="-s -w" -o MultiChat-commands-preview.exe .
+go build -trimpath -ldflags="-s -w" -o MultiChat-native-engine.exe .
 ```
 
 ## Límites
